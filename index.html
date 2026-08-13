@@ -2,9 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2e6d65">
 <title>White Saffron Documents</title>
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="polish.css?v=1">
 </head>
 <body>
 <div class="toolbar">
@@ -20,7 +22,7 @@
   <aside class="editor">
     <section class="section">
       <h2>Document</h2>
-      <p class="section-note">Creation date is manual. Expiry or due date is optional and is separate from the catering service dates.</p>
+      <p class="section-note">Creation date is manual. Expiry or due date is optional and separate from catering service dates.</p>
       <div class="formgrid">
         <div><label>Type</label><select id="type"><option value="quotation">Quotation</option><option value="proforma">Proforma Invoice</option><option value="invoice">Invoice</option></select></div>
         <div><label>Number</label><input id="number" readonly></div>
@@ -72,7 +74,7 @@
 
     <section class="section">
       <h2>Menu / Scope</h2>
-      <p class="section-note">When service dates are set, Day 1 and Day 2 menu headings use those exact dates automatically.</p>
+      <p class="section-note">When service dates are set, Day 1 and Day 2 headings use those exact dates automatically.</p>
       <div class="checkline"><input id="includeMenu" type="checkbox" checked><span>Include menu page</span></div>
       <div style="margin-top:10px"><label>Menu Title</label><input id="menuTitle" value="MESS MENU"></div>
       <div style="margin-top:10px"><label>Menu / Scope</label><textarea id="menu"></textarea></div>
@@ -89,10 +91,10 @@
         <div><label>Advance Due Date</label><input id="advanceDate" type="date"></div>
       </div>
       <div class="formgrid" style="margin-top:10px">
-        <div><label>Bank</label><input id="bank" value="Bank of Maldives (BML)"></div>
-        <div><label>Account No.</label><input id="account"></div>
-        <div><label>Send Slip Via</label><input id="slipVia" value="Viber"></div>
-        <div><label>Viber / Contact</label><input id="slipNo"></div>
+        <div><label>Bank</label><input id="bank" value="Bank of Maldives (BML)" readonly></div>
+        <div><label>Account No.</label><input id="account" value="7730000796560" readonly></div>
+        <div><label>Send Slip Via</label><input id="slipVia" value="Viber" readonly></div>
+        <div><label>Viber / Contact</label><input id="slipNo" value="7667734" readonly></div>
         <div class="full"><label>Additional Terms</label><textarea id="extra"></textarea></div>
       </div>
     </section>
@@ -108,7 +110,7 @@
       <header class="pdf-header">
         <div class="identity">
           <div class="pdf-mark">WS</div>
-          <div><div class="company-name">Cafe' White Saffron</div><div class="company-sub">Villimale, Maldives<br>whitesaffron2025@gmail.com - 7667734</div></div>
+          <div><div class="company-name">Cafe' White Saffron</div><div class="company-sub">Villimale, Maldives<br>whitesaffron2025@gmail.com<br>Hotline: 9990453</div></div>
         </div>
         <div class="doc-head"><div class="eyebrow">Official Document</div><div class="doc-title" id="pTitle"></div><div class="doc-no" id="pNumber"></div><span class="status-pill" id="pStatus"></span></div>
       </header>
@@ -158,12 +160,12 @@
       </div>
 
       <section class="terms"><div class="section-label">Payment & Terms</div><div class="terms-text" id="pTerms"></div></section>
-      <footer class="pdf-footer"><span class="footer-brand">Cafe' White Saffron</span><span id="pFooterRef"></span></footer>
+      <footer class="pdf-footer"><span class="footer-brand">Cafe' White Saffron - Hotline 9990453</span><span id="pFooterRef"></span></footer>
     </article>
 
     <article class="page menu-page hidden" id="menuPage">
       <header class="pdf-header compact-head">
-        <div class="identity"><div class="pdf-mark">WS</div><div><div class="company-name">Cafe' White Saffron</div><div class="company-sub">Catering Menu</div></div></div>
+        <div class="identity"><div class="pdf-mark">WS</div><div><div class="company-name">Cafe' White Saffron</div><div class="company-sub">Catering Menu<br>Hotline: 9990453</div></div></div>
         <div class="doc-head"><div class="eyebrow">Menu Attachment</div><div class="doc-no" id="menuDocRef"></div></div>
       </header>
 
@@ -180,10 +182,10 @@
       <div class="menu-grid" id="menuGrid"></div>
       <div class="fallback-menu hidden" id="fallbackMenu"></div>
       <div class="menu-footnote">Menu items and service times are based on the agreed catering schedule. Any approved changes should be confirmed before service.</div>
-      <footer class="pdf-footer"><span class="footer-brand">Cafe' White Saffron</span><span>Menu Attachment</span></footer>
+      <footer class="pdf-footer"><span class="footer-brand">Cafe' White Saffron - Hotline 9990453</span><span>Menu Attachment</span></footer>
     </article>
   </main>
 </div>
-<script src="app.js"></script>
+<script src="app.js?v=4"></script>
 </body>
 </html>
