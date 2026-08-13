@@ -20,7 +20,7 @@
   <aside class="editor">
     <section class="section">
       <h2>Document</h2>
-      <p class="section-note">Creation date and expiry/due date are entered manually. Leave the expiry/due date blank when it is not required.</p>
+      <p class="section-note">Creation date is manual. Expiry or due date is optional and is separate from the catering service dates.</p>
       <div class="formgrid">
         <div><label>Type</label><select id="type"><option value="quotation">Quotation</option><option value="proforma">Proforma Invoice</option><option value="invoice">Invoice</option></select></div>
         <div><label>Number</label><input id="number" readonly></div>
@@ -41,6 +41,23 @@
     </section>
 
     <section class="section">
+      <h2>Service / Event</h2>
+      <div class="switch-card">
+        <div><strong>Include Service Details</strong><small>Use for catering, buffet, events or any service with a separate delivery period.</small></div>
+        <label class="switch"><input id="useService" type="checkbox" checked><span></span></label>
+      </div>
+      <div id="serviceFields" class="service-fields">
+        <div class="formgrid">
+          <div class="full"><label>Service Type</label><input id="serviceType" value="Catering - Buffet"></div>
+          <div><label>Service From</label><input id="serviceFrom" type="date"></div>
+          <div><label>Service To</label><input id="serviceTo" type="date"></div>
+          <div><label>Pax</label><input id="servicePax" type="number" min="0" step="1" value="200"></div>
+          <div><label>Service Label</label><input id="serviceLabel" value="Buffet Period"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
       <h2>Items</h2>
       <div id="items"></div>
       <button class="btn" onclick="addItem()">+ Add Item</button>
@@ -55,7 +72,7 @@
 
     <section class="section">
       <h2>Menu / Scope</h2>
-      <p class="section-note">The menu is placed on its own spacious A4 page when enabled.</p>
+      <p class="section-note">When service dates are set, Day 1 and Day 2 menu headings use those exact dates automatically.</p>
       <div class="checkline"><input id="includeMenu" type="checkbox" checked><span>Include menu page</span></div>
       <div style="margin-top:10px"><label>Menu Title</label><input id="menuTitle" value="MESS MENU"></div>
       <div style="margin-top:10px"><label>Menu / Scope</label><textarea id="menu"></textarea></div>
@@ -107,9 +124,18 @@
         </div>
         <div class="info-card soft">
           <div class="info-title">Document Details</div>
-          <div class="meta-grid"><b>Number</b><span id="pNumber2"></span><b id="pDateLabel">Creation Date</b><span id="pDate"></span><b id="pDueLabel"></b><span id="pDue"></span></div>
+          <div class="meta-grid"><b>Number</b><span id="pNumber2"></span><b>Creation Date</b><span id="pDate"></span><b id="pDueLabel"></b><span id="pDue"></span></div>
         </div>
       </div>
+
+      <section class="service-banner hidden" id="pServiceBanner">
+        <div>
+          <div class="service-kicker">Service Details</div>
+          <div class="service-title" id="pServiceType"></div>
+          <div class="service-period"><span id="pServiceLabel"></span>: <strong id="pServicePeriod"></strong></div>
+        </div>
+        <div class="pax-block"><strong id="pServicePax"></strong><span>Pax</span></div>
+      </section>
 
       <table class="items-table">
         <thead><tr><th>#</th><th>Description</th><th class="qty">Qty</th><th>Unit</th><th class="num">Unit Price</th><th class="num">Total</th></tr></thead>
@@ -128,7 +154,7 @@
 
       <div class="payment-box hidden" id="pAdvanceBox">
         <div class="pay-card accent"><div class="pay-label">Advance Required</div><div class="pay-value" id="pAdvanceValue"></div><div class="pay-small" id="pAdvanceDue"></div></div>
-        <div class="pay-card"><div class="pay-label">Remaining Balance</div><div class="pay-value" id="pBalanceValue"></div><div class="pay-small">Balance payable as agreed before service / delivery.</div></div>
+        <div class="pay-card"><div class="pay-label">Remaining Balance</div><div class="pay-value" id="pBalanceValue"></div><div class="pay-small">Balance payable as agreed before service or delivery.</div></div>
       </div>
 
       <section class="terms"><div class="section-label">Payment & Terms</div><div class="terms-text" id="pTerms"></div></section>
@@ -140,7 +166,17 @@
         <div class="identity"><div class="pdf-mark">WS</div><div><div class="company-name">Cafe' White Saffron</div><div class="company-sub">Catering Menu</div></div></div>
         <div class="doc-head"><div class="eyebrow">Menu Attachment</div><div class="doc-no" id="menuDocRef"></div></div>
       </header>
-      <div class="menu-intro"><div><h1 class="menu-title" id="pMenuTitle"></h1><div class="menu-sub" id="menuSub"></div></div><div class="menu-badge" id="menuBadge"></div></div>
+
+      <div class="menu-intro">
+        <div><h1 class="menu-title" id="pMenuTitle"></h1><div class="menu-sub" id="menuSub"></div></div>
+        <div class="menu-badge" id="menuBadge"></div>
+      </div>
+
+      <div class="menu-service hidden" id="menuService">
+        <span id="menuServiceType"></span>
+        <strong id="menuServicePeriod"></strong>
+      </div>
+
       <div class="menu-grid" id="menuGrid"></div>
       <div class="fallback-menu hidden" id="fallbackMenu"></div>
       <div class="menu-footnote">Menu items and service times are based on the agreed catering schedule. Any approved changes should be confirmed before service.</div>
