@@ -1,9 +1,9 @@
-/* Quo preview navigation reliability fix v2 - no mutation loop. */
+/* Quo preview navigation reliability fix. */
 (function(){
   let pageIndex=0;
 
-  const modal=()=>document.getElementById('quoFullPreview');
-  const pages=()=>{const m=modal();return m?[...m.querySelectorAll('.quo-full-preview-page')]:[]};
+  function modal(){return document.getElementById('quoFullPreview')}
+  function pages(){const m=modal();return m?[...m.querySelectorAll('.quo-full-preview-page')]:[]}
 
   function hardClose(){
     const m=modal();
@@ -15,7 +15,7 @@
     pageIndex=0;
   }
 
-  function showPage(i,scroll=true){
+  function showPage(i){
     const list=pages();
     if(!list.length)return;
     pageIndex=Math.max(0,Math.min(i,list.length-1));
@@ -26,51 +26,35 @@
     const next=document.getElementById('quoPreviewNext');
     if(prev)prev.disabled=pageIndex===0;
     if(next)next.disabled=pageIndex===list.length-1;
-    if(scroll){
-      const scroller=modal()?.querySelector('.quo-full-preview-scroll');
-      if(scroller)scroller.scrollTo({top:0,behavior:'auto'});
-    }
   }
 
   function enhance(){
     const m=modal();
-    if(!m)return;
+    if(!m||m.dataset.navFixed==='1')return;
+    m.dataset.navFixed='1';
     m.setAttribute('aria-hidden',m.classList.contains('hidden')?'true':'false');
 
-    if(m.dataset.navFixed!=='1'){
-      m.dataset.navFixed='1';
-      const close=m.querySelector('[data-preview-close]');
-      if(close){
-        close.removeAttribute('onclick');
-        close.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();hardClose()},true);
-      }
-
-      const bar=document.createElement('div');
-      bar.className='quo-preview-bottom-nav';
-      bar.innerHTML='<button class="btn" id="quoPreviewBack" type="button">Back to Editor</button><div class="quo-preview-page-nav"><button class="btn" id="quoPreviewPrev" type="button">Previous</button><b id="quoPreviewPageCount">Page 1 of 1</b><button class="btn" id="quoPreviewNext" type="button">Next</button></div><button class="btn primary" id="quoPreviewDownload" type="button">Download PDF</button>';
-      m.appendChild(bar);
-      bar.querySelector('#quoPreviewBack').onclick=hardClose;
-      bar.querySelector('#quoPreviewPrev').onclick=()=>showPage(pageIndex-1);
-      bar.querySelector('#quoPreviewNext').onclick=()=>showPage(pageIndex+1);
-      bar.querySelector('#quoPreviewDownload').onclick=()=>{hardClose();if(typeof exportPDF==='function')exportPDF()};
+    const close=m.querySelector('[data-preview-close]');
+    if(close){
+      close.removeAttribute('onclick');
+      close.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();hardClose()},true);
     }
-  }
 
-  /* Patch the real preview opener once. This avoids observing class mutations,
-     which previously caused showPage -> class mutation -> observer -> showPage loops. */
-  if(typeof window.openFullPreview==='function'){
-    const originalOpen=window.openFullPreview;
-    window.openFullPreview=function(){
-      originalOpen.apply(this,arguments);
-      pageIndex=0;
-      enhance();
-      requestAnimationFrame(()=>showPage(0,false));
-    };
+    const bar=document.createElement('div');
+    bar.className='quo-preview-bottom-nav';
+    bar.innerHTML='<button class="btn" id="quoPreviewBack" type="button">Back to Editor</button><div class="quo-preview-page-nav"><button class="btn" id="quoPreviewPrev" type="button">Previous</button><b id="quoPreviewPageCount">Page 1 of 1</b><button class="btn" id="quoPreviewNext" type="button">Next</button></div><button class="btn primary" id="quoPreviewDownload" type="button">Download PDF</button>';
+    m.appendChild(bar);
+    bar.querySelector('#quoPreviewBack').onclick=hardClose;
+    bar.querySelector('#quoPreviewPrev').onclick=()=>showPage(pageIndex-1);
+    bar.querySelector('#quoPreviewNext').onclick=()=>showPage(pageIndex+1);
+    bar.querySelector('#quoPreviewDownload').onclick=()=>{hardClose(); if(typeof exportPDF==='function')exportPDF()};
   }
 
   document.addEventListener('click',e=>{
     if(e.target.closest('[data-preview-close],#quoPreviewBack')){
-      e.preventDefault();e.stopPropagation();hardClose();
+      e.preventDefault();
+      e.stopPropagation();
+      hardClose();
     }
   },true);
 
@@ -82,12 +66,9 @@
     if(e.key==='ArrowRight'){e.preventDefault();showPage(pageIndex+1)}
   },true);
 
-  /* Only watch for the modal being inserted into the DOM. Never watch class changes. */
-  const obs=new MutationObserver(()=>{
-    const m=modal();
-    if(m){enhance();obs.disconnect()}
-  });
-  obs.observe(document.body,{childList:true,subtree:true});
+  const obs=new MutationObserver(()=>enhance());
+  obs.observe(document.documentElement,{childList:true,subtree:true});
+  enhance();
 
   const st=document.createElement('style');
   st.textContent=`
@@ -99,7 +80,7 @@
     .quo-preview-page-nav{display:flex;align-items:center;gap:8px}.quo-preview-page-nav b{min-width:92px;text-align:center;font-size:10px;color:#687074}
     .quo-preview-bottom-nav .btn{min-height:40px;touch-action:manipulation}
     @media(max-width:760px){
-      .quo-full-preview-scroll{padding:8px 6px 74px!important;overflow-y:auto!important;touch-action:pan-y}
+      .quo-full-preview-scroll{padding:8px 6px 74px!important;overflow-y:auto!important;touch-action:pan-y!important}
       .quo-preview-bottom-nav{position:fixed;left:0;right:0;bottom:0;padding:8px max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));gap:5px}
       .quo-preview-bottom-nav .btn{padding:9px 8px;font-size:10px;flex:1}
       .quo-preview-page-nav{display:flex;flex:2;gap:4px}.quo-preview-page-nav .btn{flex:1}.quo-preview-page-nav b{min-width:58px;font-size:9px}
