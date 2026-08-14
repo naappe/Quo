@@ -3,189 +3,69 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#2e6d65">
-<title>White Saffron Documents</title>
-<link rel="stylesheet" href="styles.css">
-<link rel="stylesheet" href="polish.css?v=1">
+<meta name="theme-color" content="#163f3a">
+<title>Quo - White Saffron Documents</title>
+<link rel="stylesheet" href="quo-app.css?v=2">
+<link rel="stylesheet" href="quo-doc.css?v=2">
 </head>
 <body>
-<div class="toolbar">
-  <div class="brand"><div class="brandmark">WS</div><div><strong>White Saffron Documents</strong><small>Quotation - Proforma - Invoice</small></div></div>
-  <span class="docchip" id="chip"></span>
-  <button class="btn" onclick="newDoc()">New</button>
-  <button class="btn" onclick="saveDoc()">Save</button>
-  <button class="btn" onclick="convertDoc()">Convert</button>
-  <button class="btn primary" onclick="savePDF()">Save PDF</button>
-</div>
-
-<div class="workspace">
-  <aside class="editor">
-    <section class="section">
-      <h2>Document</h2>
-      <p class="section-note">Creation date is manual. Expiry or due date is optional and separate from catering service dates.</p>
-      <div class="formgrid">
-        <div><label>Type</label><select id="type"><option value="quotation">Quotation</option><option value="proforma">Proforma Invoice</option><option value="invoice">Invoice</option></select></div>
-        <div><label>Number</label><input id="number" readonly></div>
-        <div><label>Creation Date</label><input id="date" type="date"></div>
-        <div><label id="dueLabel">Expires On - Optional</label><input id="due" type="date"></div>
-        <div><label>Status</label><select id="status"><option>Draft</option><option>Final</option><option>Paid</option><option>Cancelled</option></select></div>
-        <div><label>Currency</label><input id="currency" value="MVR"></div>
-      </div>
-    </section>
-
-    <section class="section">
-      <h2>Customer</h2>
-      <div class="formgrid">
-        <div><label>Name</label><input id="customer"></div>
-        <div><label>Phone</label><input id="phone"></div>
-        <div class="full"><label>Address / Reference</label><input id="address"></div>
-      </div>
-    </section>
-
-    <section class="section">
-      <h2>Service / Event</h2>
-      <div class="switch-card">
-        <div><strong>Include Service Details</strong><small>Use for catering, buffet, events or any service with a separate delivery period.</small></div>
-        <label class="switch"><input id="useService" type="checkbox" checked><span></span></label>
-      </div>
-      <div id="serviceFields" class="service-fields">
-        <div class="formgrid">
-          <div class="full"><label>Service Type</label><input id="serviceType" value="Catering - Buffet"></div>
-          <div><label>Service From</label><input id="serviceFrom" type="date"></div>
-          <div><label>Service To</label><input id="serviceTo" type="date"></div>
-          <div><label>Pax</label><input id="servicePax" type="number" min="0" step="1" value="200"></div>
-          <div><label>Service Label</label><input id="serviceLabel" value="Buffet Period"></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section">
-      <h2>Items</h2>
-      <div id="items"></div>
-      <button class="btn" onclick="addItem()">+ Add Item</button>
-      <div class="formgrid compact" style="margin-top:10px">
-        <div><label>GST Treatment</label><select id="gstMode"><option value="none">No GST</option><option value="exclusive">Add GST</option><option value="inclusive">Price Includes GST</option></select></div>
-        <div><label>GST %</label><input id="gstRate" type="number" value="8" step="0.01"></div>
-        <div><label>Discount</label><input id="discount" type="number" value="0" step="0.01"></div>
-        <div class="checkline"><input id="showGst" type="checkbox"><span>Show zero GST row</span></div>
-      </div>
-      <div class="editorTotals"><span>Sub Total</span><b id="eSub">0.00</b><span>GST</span><b id="eGst">0.00</b><span>Total</span><b id="eTotal">0.00</b></div>
-    </section>
-
-    <section class="section">
-      <h2>Menu / Scope</h2>
-      <p class="section-note">When service dates are set, Day 1 and Day 2 headings use those exact dates automatically.</p>
-      <div class="checkline"><input id="includeMenu" type="checkbox" checked><span>Include menu page</span></div>
-      <div style="margin-top:10px"><label>Menu Title</label><input id="menuTitle" value="MESS MENU"></div>
-      <div style="margin-top:10px"><label>Menu / Scope</label><textarea id="menu"></textarea></div>
-    </section>
-
-    <section class="section">
-      <h2>Payment</h2>
-      <div class="switch-card">
-        <div><strong>Advance Payment</strong><small>Enable only when an advance is required for this document.</small></div>
-        <label class="switch"><input id="useAdvance" type="checkbox"><span></span></label>
-      </div>
-      <div id="advanceFields" class="formgrid advance-fields">
-        <div><label>Advance %</label><input id="advance" type="number" value="50" min="0" max="100" step="1"></div>
-        <div><label>Advance Due Date</label><input id="advanceDate" type="date"></div>
-      </div>
-      <div class="formgrid" style="margin-top:10px">
-        <div><label>Bank</label><input id="bank" value="Bank of Maldives (BML)" readonly></div>
-        <div><label>Account No.</label><input id="account" value="7730000796560" readonly></div>
-        <div><label>Send Slip Via</label><input id="slipVia" value="Viber" readonly></div>
-        <div><label>Viber / Contact</label><input id="slipNo" value="7667734" readonly></div>
-        <div class="full"><label>Additional Terms</label><textarea id="extra"></textarea></div>
-      </div>
-    </section>
-
-    <section class="section">
-      <h2>Saved Documents</h2>
-      <div id="history" class="history small"></div>
-    </section>
+<div class="app" id="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="side-brand">
+      <div class="mark">Q</div>
+      <div><strong>QUO</strong><small>White Saffron Documents</small></div>
+    </div>
+    <nav class="nav">
+      <button data-view="dashboard" class="active"><span class="nav-icon">⌂</span><span>Dashboard</span></button>
+      <div class="nav-label">Documents</div>
+      <button data-view="documents" data-filter="all"><span class="nav-icon">□</span><span>All Documents</span></button>
+      <button data-view="documents" data-filter="quotation"><span class="nav-dot"></span><span>Quotations</span></button>
+      <button data-view="documents" data-filter="proforma"><span class="nav-dot"></span><span>Proforma Invoices</span></button>
+      <button data-view="documents" data-filter="invoice"><span class="nav-dot"></span><span>Invoices</span></button>
+      <button data-view="documents" data-filter="receipt"><span class="nav-dot"></span><span>Receipts</span></button>
+      <div class="nav-label">Directory</div>
+      <button data-view="customers"><span class="nav-icon">○</span><span>Customers</span></button>
+      <div class="nav-label">System</div>
+      <button data-view="settings"><span class="nav-icon">⚙</span><span>Settings</span></button>
+    </nav>
+    <div class="side-footer">
+      <div class="live-pill"><i></i> Supabase connected</div>
+      <small>No password mode</small>
+    </div>
   </aside>
-
-  <main class="preview">
-    <article class="page" id="docPage">
-      <header class="pdf-header">
-        <div class="identity">
-          <div class="pdf-mark">WS</div>
-          <div><div class="company-name">Cafe' White Saffron</div><div class="company-sub">Villimale, Maldives<br>whitesaffron2025@gmail.com<br>Hotline: 9990453</div></div>
-        </div>
-        <div class="doc-head"><div class="eyebrow">Official Document</div><div class="doc-title" id="pTitle"></div><div class="doc-no" id="pNumber"></div><span class="status-pill" id="pStatus"></span></div>
-      </header>
-
-      <div class="rule"></div>
-
-      <div class="info-grid">
-        <div class="info-card">
-          <div class="info-title">Prepared For</div>
-          <div class="customer-name" id="pCustomer"></div>
-          <div class="customer-meta" id="pPhone"></div>
-          <div class="customer-meta" id="pAddress"></div>
-        </div>
-        <div class="info-card soft">
-          <div class="info-title">Document Details</div>
-          <div class="meta-grid"><b>Number</b><span id="pNumber2"></span><b>Creation Date</b><span id="pDate"></span><b id="pDueLabel"></b><span id="pDue"></span></div>
-        </div>
+  <section class="main-shell">
+    <header class="topbar">
+      <button class="icon-btn mobile-only" id="menuBtn" aria-label="Open navigation">☰</button>
+      <div class="top-title">
+        <div class="eyebrow" id="topEyebrow">QUO</div>
+        <h1 id="topTitle">Dashboard</h1>
       </div>
-
-      <section class="service-banner hidden" id="pServiceBanner">
-        <div>
-          <div class="service-kicker">Service Details</div>
-          <div class="service-title" id="pServiceType"></div>
-          <div class="service-period"><span id="pServiceLabel"></span>: <strong id="pServicePeriod"></strong></div>
-        </div>
-        <div class="pax-block"><strong id="pServicePax"></strong><span>Pax</span></div>
-      </section>
-
-      <table class="items-table">
-        <thead><tr><th>#</th><th>Description</th><th class="qty">Qty</th><th>Unit</th><th class="num">Unit Price</th><th class="num">Total</th></tr></thead>
-        <tbody id="pItems"></tbody>
-      </table>
-
-      <div class="summary-wrap">
-        <div class="summary-note" id="summaryNote"></div>
-        <table class="summary">
-          <tr><td>Sub Total</td><td id="pSub"></td></tr>
-          <tr id="pDiscRow"><td>Discount</td><td id="pDisc"></td></tr>
-          <tr id="pGstRow"><td id="pGstLabel"></td><td id="pGst"></td></tr>
-          <tr class="grand"><td id="pTotalLabel"></td><td id="pTotal"></td></tr>
-        </table>
+      <div class="top-actions">
+        <label class="prepared-by"><span>Prepared by</span><input id="preparedBy" placeholder="Your name"></label>
+        <button class="btn primary" id="newDocBtn">+ New Document</button>
       </div>
-
-      <div class="payment-box hidden" id="pAdvanceBox">
-        <div class="pay-card accent"><div class="pay-label">Advance Required</div><div class="pay-value" id="pAdvanceValue"></div><div class="pay-small" id="pAdvanceDue"></div></div>
-        <div class="pay-card"><div class="pay-label">Remaining Balance</div><div class="pay-value" id="pBalanceValue"></div><div class="pay-small">Balance payable as agreed before service or delivery.</div></div>
-      </div>
-
-      <section class="terms"><div class="section-label">Payment & Terms</div><div class="terms-text" id="pTerms"></div></section>
-      <footer class="pdf-footer"><span class="footer-brand">Cafe' White Saffron - Hotline 9990453</span><span id="pFooterRef"></span></footer>
-    </article>
-
-    <article class="page menu-page hidden" id="menuPage">
-      <header class="pdf-header compact-head">
-        <div class="identity"><div class="pdf-mark">WS</div><div><div class="company-name">Cafe' White Saffron</div><div class="company-sub">Catering Menu<br>Hotline: 9990453</div></div></div>
-        <div class="doc-head"><div class="eyebrow">Menu Attachment</div><div class="doc-no" id="menuDocRef"></div></div>
-      </header>
-
-      <div class="menu-intro">
-        <div><h1 class="menu-title" id="pMenuTitle"></h1><div class="menu-sub" id="menuSub"></div></div>
-        <div class="menu-badge" id="menuBadge"></div>
-      </div>
-
-      <div class="menu-service hidden" id="menuService">
-        <span id="menuServiceType"></span>
-        <strong id="menuServicePeriod"></strong>
-      </div>
-
-      <div class="menu-grid" id="menuGrid"></div>
-      <div class="fallback-menu hidden" id="fallbackMenu"></div>
-      <div class="menu-footnote">Menu items and service times are based on the agreed catering schedule. Any approved changes should be confirmed before service.</div>
-      <footer class="pdf-footer"><span class="footer-brand">Cafe' White Saffron - Hotline 9990453</span><span>Menu Attachment</span></footer>
-    </article>
-  </main>
+    </header>
+    <main class="content" id="view"></main>
+  </section>
 </div>
-<script src="app.js?v=4"></script>
+<div class="modal hidden" id="newDocModal" role="dialog" aria-modal="true" aria-labelledby="newDocTitle">
+  <div class="modal-card small-modal">
+    <div class="modal-head"><div><div class="eyebrow">CREATE</div><h2 id="newDocTitle">New Document</h2></div><button class="icon-btn" data-close-modal>×</button></div>
+    <p class="muted">What would you like to create?</p>
+    <div class="create-grid">
+      <button data-create="quotation"><b>QT</b><span>Quotation</span><small>Prepare an offer</small></button>
+      <button data-create="proforma"><b>PI</b><span>Proforma Invoice</span><small>Request payment</small></button>
+      <button data-create="invoice"><b>INV</b><span>Invoice</span><small>Bill a customer</small></button>
+      <button data-create="receipt"><b>RC</b><span>Receipt</span><small>Record a payment</small></button>
+    </div>
+  </div>
+</div>
+<div id="toast" class="toast hidden" aria-live="polite"></div>
+<div id="printRoot" class="print-root"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="quo-base.js?v=2"></script>
+<script src="quo-data.js?v=2"></script>
+<script src="quo-editor.js?v=2"></script>
+<script src="quo-ui.js?v=2"></script>
 </body>
 </html>
