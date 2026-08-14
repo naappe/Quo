@@ -1,4 +1,4 @@
-/* Quo v26 - canonical adaptive commercial document renderer. */
+/* Quo v27 - canonical adaptive commercial document renderer. */
 (function(){
   const brandLogo=typeof QUO_BRAND_LOGO_URL!=='undefined'?QUO_BRAND_LOGO_URL:'./assets/white-saffron-logo.svg?v=17';
 
@@ -50,9 +50,11 @@
   }
 
   function thankYou(d){
-    if(d.document_type==='receipt')return 'Thank you for your payment.';
-    if(d.document_type==='invoice')return 'Thank you for your business.';
-    return "Thank you for considering Cafe' White Saffron.";
+    if(d.document_type==='quotation')return 'Thank you for the opportunity to serve you. We look forward to working with you.';
+    if(d.document_type==='proforma')return 'Thank you for confirming your order. We appreciate your business.';
+    if(d.document_type==='invoice')return "Thank you for choosing Cafe' White Saffron. We appreciate your business.";
+    if(d.document_type==='receipt')return 'Thank you for your payment. We appreciate your continued support.';
+    return 'Thank you for your business.';
   }
 
   function renderIdentity(d,t){
