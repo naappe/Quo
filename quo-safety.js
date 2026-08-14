@@ -1,4 +1,4 @@
-/* Quo v6 action safety: validates save/payment flows and protects linked documents. */
+/* Quo v8 action safety: validates save/payment flows, linked documents and PDF export. */
 
 const _quoSafeSaveCurrent=saveCurrent;
 saveCurrent=async function(showToast=true){
@@ -70,4 +70,42 @@ receiptFromCurrent=function(){
   r.paid_amount=amt;
   r.extra_terms=`Payment received against ${src.document_number}.`;
   openEditor(r);
+};
+
+exportPDF=async function(){
+  try{
+    readEditor();
+    if(!S.current)return alert('Open a document before exporting.');
+    const ok=await saveCurrent(false);
+    if(!ok)return;
+    renderPrint(S.current);
+    const root=$('#printRoot');
+    const pages=root?[...root.querySelectorAll('.pdf-page')]:[];
+    if(!root||!pages.length){
+      console.error('PDF export aborted: no printable pages were generated.');
+      alert('Could not prepare the PDF. Please refresh Quo and try again.');
+      return;
+    }
+    const expected=S.current.include_menu&&String(S.current.menu_text||'').trim()&&S.current.document_type!=='receipt'?2:1;
+    if(pages.length<expected){
+      console.warn(`PDF export generated ${pages.length} page(s); ${expected} expected.`);
+      alert('The PDF preview is incomplete. Please check the menu content before exporting.');
+      return;
+    }
+    const oldTitle=document.title;
+    const safeCustomer=String(S.current.customer_name||'document').replace(/[\\/:*?"<>|]+/g,'-').trim()||'document';
+    document.title=`${S.current.document_number}-${safeCustomer}`;
+    let restored=false;
+    const restore=()=>{if(restored)return;restored=true;document.title=oldTitle};
+    window.addEventListener('afterprint',restore,{once:true});
+    toast(`Preparing ${pages.length}-page PDF...`);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      window.focus();
+      window.print();
+      setTimeout(restore,1500);
+    }));
+  }catch(e){
+    console.error('PDF export failed',e);
+    alert('PDF export failed: '+(e?.message||'Unknown error'));
+  }
 };
