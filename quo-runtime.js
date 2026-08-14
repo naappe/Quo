@@ -1,6 +1,6 @@
-/* Quo v14 runtime reliability: clear automatic numbering, full PDF preview, reliable export, White Saffron logo. */
+/* Quo v15 runtime: automatic numbering, full preview, direct named PDF download, White Saffron logo. */
 
-const QUO_LOGO_URL='./assets/white-saffron-logo.png?v=14';
+const QUO_LOGO_URL='./assets/white-saffron-logo.png?v=15';
 
 function quoAutoNumberLabel(type){
   const p={quotation:'QT',proforma:'PI',invoice:'INV',receipt:'RC'}[type]||'DOC';
@@ -25,8 +25,10 @@ renderEditor=function(){
   if(!html.includes('data-full-preview')){
     html=html.replace(
       '<button class="btn" data-pdf>Export PDF</button>',
-      '<button class="btn" data-full-preview>Preview PDF</button><button class="btn" data-pdf>Export PDF</button>'
+      '<button class="btn" data-full-preview>Preview PDF</button><button class="btn" data-pdf>Download PDF</button>'
     );
+  }else{
+    html=html.replace('data-pdf>Export PDF</button>','data-pdf>Download PDF</button>');
   }
 
   if(!d.id){
@@ -38,7 +40,7 @@ renderEditor=function(){
   return html;
 };
 
-/* Keep the DB trigger as the authority, then verify the permanent number came back. */
+/* Keep the database trigger as the authority, then verify the permanent number came back. */
 const _quoRuntimeSaveCurrent=saveCurrent;
 saveCurrent=async function(showToast=true){
   readEditor();
@@ -86,14 +88,20 @@ renderPrint=function(d){
 };
 
 function quoSafeFilePart(v){
-  return String(v||'document').replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,' ').trim()||'document';
+  return String(v||'document')
+    .normalize?.('NFKD')
+    ?.replace(/[\u0300-\u036f]/g,'')
+    .replace(/[\\/:*?"<>|]+/g,'-')
+    .replace(/[^A-Za-z0-9._ -]+/g,'')
+    .trim()
+    .replace(/\s+/g,'-') || 'document';
 }
 
-function quoPopupPrintHTML(title,bodyHTML){
-  const cssURL=new URL('./quo-doc.css?v=4',location.href).href;
-  const absoluteLogo=new URL(QUO_LOGO_URL,location.href).href;
-  const body=String(bodyHTML).replaceAll(QUO_LOGO_URL,absoluteLogo);
-  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><link rel="stylesheet" href="${cssURL}"><style>@page{size:A4;margin:0}html,body{margin:0;padding:0;background:#fff}.pdf-page{margin:0!important;box-shadow:none!important}.pdf-logo{width:28mm;max-height:23mm;object-fit:contain;object-position:left top;display:block;margin:0 0 1.5mm}.pdf-company.has-logo h1{display:none}</style></head><body>${body}</body></html>`;
+function quoPDFFileName(d){
+  const type=quoSafeFilePart(CFG[d.document_type]?.label||'Document');
+  const no=quoSafeFilePart(d.document_number||quoAutoNumberLabel(d.document_type));
+  const customer=quoSafeFilePart(d.customer_name||'Customer');
+  return `${type}_${no}_${customer}.pdf`;
 }
 
 function quoEnsurePreviewModal(){
@@ -111,7 +119,7 @@ function quoEnsurePreviewModal(){
       </div>
       <div class="quo-full-preview-actions">
         <button class="btn" type="button" data-preview-close>Close</button>
-        <button class="btn primary" type="button" data-preview-export>Export PDF</button>
+        <button class="btn primary" type="button" data-preview-export>Download PDF</button>
       </div>
     </div>
     <div class="quo-full-preview-scroll">
@@ -152,7 +160,41 @@ function openFullPreview(){
   modal.querySelector('.quo-full-preview-scroll').scrollTop=0;
 }
 
-/* Open the print window immediately on the click, before any async save work. */
+function quoWaitForImages(root,timeout=3500){
+  const images=[...root.querySelectorAll('img')];
+  if(!images.length||images.every(i=>i.complete))return Promise.resolve();
+  return new Promise(resolve=>{
+    let pending=images.filter(i=>!i.complete).length;
+    let done=false;
+    const finish=()=>{if(done)return;done=true;resolve();};
+    const one=()=>{pending--;if(pending<=0)finish();};
+    images.filter(i=>!i.complete).forEach(img=>{
+      img.addEventListener('load',one,{once:true});
+      img.addEventListener('error',one,{once:true});
+    });
+    setTimeout(finish,timeout);
+  });
+}
+
+function quoBuildExportHost(pages){
+  const host=document.createElement('div');
+  host.id='quoPdfExportHost';
+  host.setAttribute('aria-hidden','true');
+  Object.assign(host.style,{
+    position:'fixed',left:'-12000px',top:'0',width:'210mm',background:'#fff',zIndex:'-1',pointerEvents:'none'
+  });
+  pages.forEach(page=>{
+    const clone=page.cloneNode(true);
+    clone.style.margin='0';
+    clone.style.boxShadow='none';
+    clone.style.pageBreakAfter='auto';
+    host.appendChild(clone);
+  });
+  document.body.appendChild(host);
+  return host;
+}
+
+/* Direct PDF download: avoids Windows "Save Print Output As" and guarantees the filename. */
 exportPDF=async function(){
   readEditor();
   if(!S.current)return alert('Open a document before exporting.');
@@ -162,59 +204,67 @@ exportPDF=async function(){
     return;
   }
 
-  const printWindow=window.open('','quo-pdf-export','width=1050,height=800');
-  if(!printWindow){
-    alert('Your browser blocked the PDF window. Allow pop-ups for this Quo site, then click Export PDF again.');
-    return;
-  }
-  printWindow.document.open();
-  printWindow.document.write('<!doctype html><html><head><title>Preparing PDF...</title></head><body style="font-family:Arial,sans-serif;padding:32px;color:#333">Preparing document...</body></html>');
-  printWindow.document.close();
+  const btn=document.querySelector('[data-pdf]');
+  if(btn?.disabled)return;
+  if(btn){btn.disabled=true;btn.dataset.oldText=btn.textContent;btn.textContent='Creating PDF...';}
 
+  let host=null;
   try{
     const ok=await saveCurrent(false);
-    if(!ok){printWindow.close();return;}
+    if(!ok)return;
+
+    if(typeof window.html2canvas!=='function'||!window.jspdf?.jsPDF){
+      throw new Error('PDF download engine did not load. Refresh the page and try again.');
+    }
 
     renderPrint(S.current);
-    const root=document.querySelector('#printRoot');
+    const root=document.getElementById('printRoot');
     const pages=root?[...root.querySelectorAll('.pdf-page')]:[];
-    if(!root||!pages.length){
-      printWindow.close();
-      alert('Could not prepare the PDF pages. Refresh Quo and try again.');
-      return;
-    }
+    if(!pages.length)throw new Error('Could not prepare the PDF pages.');
 
     const expected=S.current.include_menu&&String(S.current.menu_text||'').trim()&&S.current.document_type!=='receipt'?2:1;
-    if(pages.length<expected){
-      printWindow.close();
-      alert('The PDF is incomplete. Check the menu content and try again.');
-      return;
+    if(pages.length<expected)throw new Error('The PDF is incomplete. Check the menu content and try again.');
+
+    host=quoBuildExportHost(pages);
+    await quoWaitForImages(host);
+    if(document.fonts?.ready)await document.fonts.ready;
+
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true,putOnlyUsedFonts:true});
+
+    for(let i=0;i<host.children.length;i++){
+      const page=host.children[i];
+      const canvas=await window.html2canvas(page,{
+        scale:3,
+        useCORS:true,
+        allowTaint:false,
+        backgroundColor:'#ffffff',
+        logging:false,
+        windowWidth:page.scrollWidth,
+        windowHeight:page.scrollHeight,
+        imageTimeout:3500
+      });
+      if(i>0)pdf.addPage('a4','portrait');
+      const img=canvas.toDataURL('image/jpeg',0.98);
+      pdf.addImage(img,'JPEG',0,0,210,297,undefined,'FAST');
     }
 
-    const title=`${quoSafeFilePart(S.current.document_number)}-${quoSafeFilePart(S.current.customer_name)}`;
-    const printable=quoPopupPrintHTML(title,root.innerHTML);
-    printWindow.document.open();
-    printWindow.document.write(printable);
-    printWindow.document.close();
-    printWindow.onafterprint=()=>{try{printWindow.close()}catch(_){}};
-
-    const doPrint=()=>{
-      const images=[...printWindow.document.images];
-      if(!images.length||images.every(img=>img.complete)){
-        setTimeout(()=>{try{printWindow.focus();printWindow.print()}catch(e){console.error(e)}},180);
-        return;
-      }
-      let left=images.filter(img=>!img.complete).length;
-      const done=()=>{left--;if(left<=0)setTimeout(()=>{try{printWindow.focus();printWindow.print()}catch(e){console.error(e)}},120)};
-      images.filter(img=>!img.complete).forEach(img=>{img.addEventListener('load',done,{once:true});img.addEventListener('error',done,{once:true})});
-      setTimeout(()=>{try{printWindow.focus();printWindow.print()}catch(e){console.error(e)}},1400);
-    };
-    if(printWindow.document.readyState==='complete')doPrint();else printWindow.addEventListener('load',doPrint,{once:true});
-    toast(`Exporting ${S.current.document_number}`);
+    const filename=quoPDFFileName(S.current);
+    pdf.setProperties({
+      title:`${CFG[S.current.document_type]?.label||'Document'} ${S.current.document_number}`,
+      subject:S.current.customer_name||'',
+      author:S.settings.company_name||"Cafe' White Saffron",
+      creator:'Quo - White Saffron Documents'
+    });
+    pdf.save(filename);
+    toast(`Downloaded ${filename}`);
   }catch(e){
     console.error('PDF export failed',e);
-    try{printWindow.close()}catch(_){}
     alert('PDF export failed: '+(e?.message||'Unknown error'));
+  }finally{
+    host?.remove();
+    const currentBtn=document.querySelector('[data-pdf]');
+    if(currentBtn){currentBtn.disabled=false;currentBtn.textContent='Download PDF';}
   }
 };
 
@@ -244,6 +294,7 @@ if(!document.getElementById('quoRuntimeStyle')){
     .runtime-number-hint{grid-column:1/-1;margin:-5px 0 0;font-size:8px;color:#8d9395}
     .pdf-logo{width:28mm;max-height:23mm;object-fit:contain;object-position:left top;display:block;margin:0 0 1.5mm}
     .pdf-company.has-logo h1{display:none}
+    [data-pdf]:disabled{opacity:.62;cursor:wait}
     html.quo-preview-open,html.quo-preview-open body{overflow:hidden}
     .quo-full-preview{position:fixed;inset:0;z-index:1000;background:#eef0f1;display:flex;flex-direction:column;color:#25292b}
     .quo-full-preview.hidden{display:none!important}
