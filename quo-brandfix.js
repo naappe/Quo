@@ -1,6 +1,6 @@
-/* Quo v16 branding fix: keep the White Saffron logo and business name visible in preview and downloaded PDF. */
+/* Quo v17 branding fix: use the supplied White Saffron WS logo and keep business name visible in preview and downloaded PDF. */
 
-const QUO_BRAND_LOGO_URL='./assets/white-saffron-logo.svg?v=16';
+const QUO_BRAND_LOGO_URL='./assets/white-saffron-logo.svg?v=17';
 
 function quoBrandApplySidebarLogo(){
   const mark=document.querySelector('.side-brand .mark');
@@ -48,17 +48,17 @@ if(!document.getElementById('quoBrandFixStyle')){
 
     .pdf-company.quo-brand-company{
       display:grid!important;
-      grid-template-columns:18mm minmax(0,1fr);
+      grid-template-columns:22mm minmax(0,1fr);
       grid-template-rows:auto auto;
       column-gap:4mm;
       align-items:center;
-      min-width:78mm;
+      min-width:82mm;
     }
     .pdf-company.quo-brand-company .quo-pdf-logo{
       grid-column:1;
       grid-row:1 / span 2;
-      width:18mm;
-      height:18mm;
+      width:22mm;
+      height:22mm;
       display:block;
       object-fit:contain;
       align-self:start;
