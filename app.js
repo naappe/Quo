@@ -1,5 +1,5 @@
 const core=document.createElement('script');
-core.src='app-core.js?v=2';
+core.src='app-core.js?v=3';
 
 let pdfPreviewIndex=0;
 let pdfReturnScroll=0;
@@ -35,6 +35,7 @@ function installPdfNavigation(){
     body.pdf-preview-mode .preview{overflow:visible!important;padding:0!important}
     body.pdf-preview-mode .preview .page{display:none!important;margin:0 auto 24px!important}
     body.pdf-preview-mode .preview .page.preview-active:not(.hidden){display:block!important;zoom:var(--pdf-zoom,1)}
+    .meal-time{display:none!important}
     @media(max-width:680px){
       .pdf-nav{top:auto;bottom:10px;width:calc(100% - 16px);padding:8px;border-radius:13px;gap:6px}
       .pdf-nav-pages{flex:1;gap:5px}.pdf-nav-btn{padding:9px 10px;font-size:11px}.pdf-page-label{min-width:72px;font-size:10px}
@@ -116,6 +117,12 @@ window.addEventListener('keydown',e=>{
 
 core.onload=async()=>{
   try{
+    const originalRenderMenu=renderMenu;
+    renderMenu=function(){
+      originalRenderMenu();
+      document.querySelectorAll('.meal-time').forEach(el=>el.remove());
+    };
+
     injectLogin=()=>{};
     if(!window.supabase){await new Promise((ok,fail)=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';sc.onload=ok;sc.onerror=fail;document.head.appendChild(sc)})}
     const anonClient=window.supabase.createClient('https://tmupbruwmwlrmewhoodn.supabase.co','sb_publishable_LAn1liS2zqMqlB33IQJxIw_NbgWKix1',{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
@@ -180,7 +187,7 @@ core.onload=async()=>{
       setNoAuth();
       await loadDocs();
       if(!s)fresh('quotation');
-      else {if(field)field.value=displayName;state('Ready');}
+      else {if(field)field.value=displayName;render();state('Ready');}
     },350);
   }catch(e){console.error(e);alert('Could not start quotation system: '+e.message)}
 };
