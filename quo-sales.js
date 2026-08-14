@@ -1,4 +1,4 @@
-/* Quo v9 quotation sales pipeline: track open deals, follow-up, confirmation and lost quotes. */
+/* Quo v10 quotation sales pipeline: track open deals, confirmation and payment handoff. */
 
 CFG.quotation.statuses=['Draft','Sent','Follow Up','Confirmed','Lost','Expired','Cancelled'];
 
@@ -16,18 +16,47 @@ function quoteStageClass(status){
   return s;
 }
 
+function linkedQuotePaymentDocument(quoteId){
+  const active=d=>d.source_document_id===quoteId&&d.status!=='Cancelled';
+  return S.docs.find(d=>active(d)&&d.document_type==='invoice')||S.docs.find(d=>active(d)&&d.document_type==='proforma')||null;
+}
+
+async function openOrCreatePendingProforma(quote){
+  const existing=linkedQuotePaymentDocument(quote.id);
+  if(existing){
+    openEditor(existing);
+    toast(`${existing.document_number} already linked to ${quote.document_number}`);
+    return;
+  }
+
+  const pi=blankDoc('proforma',quote);
+  pi.source_document_id=quote.id;
+  pi.status='Awaiting Payment';
+  pi.creation_date=isoToday();
+  pi.expires_on=quote.advance_due||quote.expires_on||'';
+  pi.paid_amount=0;
+  pi.payment_reference='';
+  openEditor(pi);
+  const ok=await saveCurrent(false);
+  if(ok)toast(`${S.current.document_number} created - Awaiting Payment`);
+}
+
 async function updateQuoteStage(id,status){
   const d=S.docs.find(x=>x.id===id)||(S.current?.id===id?S.current:null);
   if(!d||d.document_type!=='quotation')return;
   const name=prepared();
   if(!name){alert('Enter Prepared By before changing a quotation status.');$('#preparedBy')?.focus();return}
-  if(status==='Confirmed'&&!confirm(`Confirm ${d.document_number} as a won deal?\n\nYou can then convert it to a Proforma Invoice or Invoice.`))return;
+  if(status==='Confirmed'&&!confirm(`Confirm ${d.document_number} as a won deal?\n\nBecause payment is pending, Quo will create a Proforma Invoice with status Awaiting Payment.`))return;
   if(status==='Lost'&&!confirm(`Mark ${d.document_number} as lost?`))return;
   try{
     const r=await sb.from('quo_documents').update({status,updated_by:null,updated_by_name:name}).eq('id',id).select('*').single();
     if(r.error)throw r.error;
     if(S.current?.id===id)S.current={...S.current,...r.data};
     await refreshDocs();
+    if(status==='Confirmed'){
+      await openOrCreatePendingProforma(r.data);
+      return;
+    }
     toast(`${d.document_number} - ${status}`);
     render();
   }catch(e){
@@ -45,7 +74,7 @@ function quotePipelineCard(d){
     ? `<button class="deal-btn open" data-open="${d.id}">Open</button>`
     : status==='Lost'||status==='Expired'||status==='Cancelled'
       ? `<button class="deal-btn open" data-open="${d.id}">Open</button>`
-      : `<button class="deal-btn sent" data-quote-stage="Sent" data-quote-id="${d.id}">Sent</button><button class="deal-btn follow" data-quote-stage="Follow Up" data-quote-id="${d.id}">Follow Up</button><button class="deal-btn win" data-quote-stage="Confirmed" data-quote-id="${d.id}">Confirm Deal</button><button class="deal-btn open" data-open="${d.id}">Open</button>`;
+      : `<button class="deal-btn sent" data-quote-stage="Sent" data-quote-id="${d.id}">Sent</button><button class="deal-btn follow" data-quote-stage="Follow Up" data-quote-id="${d.id}">Follow Up</button><button class="deal-btn win" data-quote-stage="Confirmed" data-quote-id="${d.id}">Confirm + PI</button><button class="deal-btn open" data-open="${d.id}">Open</button>`;
   return `<article class="deal-row">
     <div class="deal-main"><strong>${esc(d.document_number)}</strong><span>${esc(d.customer_name||'No customer')}</span>${service?`<small>${esc(service)}</small>`:''}</div>
     <div class="deal-money"><strong>${money(c.total,d.currency)}</strong><small>Valid until ${esc(expiry)}</small></div>
@@ -75,7 +104,7 @@ renderDashboard=function(){
   const active=S.docs.filter(d=>d.service_enabled&&d.service_to&&d.service_to>=today&&d.status!=='Cancelled').sort((a,b)=>String(a.service_from).localeCompare(String(b.service_from))).slice(0,5);
   const pipeline=q.filter(d=>!['Cancelled'].includes(d.status)).sort((a,b)=>String(b.updated_at||'').localeCompare(String(a.updated_at||''))).slice(0,8);
 
-  return pageHead('Welcome back','Track quotations as sales opportunities, then move confirmed deals into payment documents.','<button class="btn primary" data-new>+ New Document</button>')+
+  return pageHead('Welcome back','Track quotations as sales opportunities. Confirmed deals automatically start the payment stage with a Proforma Invoice.','<button class="btn primary" data-new>+ New Document</button>')+
     `<section class="kpis sales-kpis">
       ${kpi('Open Quotations',money(openQuoteValue,S.settings.currency),`${openQuotes.length} deals to follow up`,'QT','money quote-open-kpi')}
       ${kpi('Confirmed Deals',money(wonQuoteValue,S.settings.currency),`${wonQuotes.length} won quotations`,'WON','money quote-won-kpi')}
@@ -84,7 +113,7 @@ renderDashboard=function(){
       ${kpi('Pending Payment',money(pendingAmount,S.settings.currency),`${pendingDocs} documents`,'DUE','money pending-kpi')}
       ${kpi('Paid',money(paidAmount,S.settings.currency),`${paidDocs} documents with payment`,'PAID','money paid-kpi')}
     </section>`+
-    `<section class="panel deal-panel"><div class="panel-head"><div><h3>Quotation Pipeline</h3><p>Follow up open quotations and confirm the deals you win.</p></div><button data-doc-filter="quotation">View quotations</button></div><div class="deal-list">${pipeline.length?pipeline.map(quotePipelineCard).join(''):'<div class="empty">No quotations yet.</div>'}</div></section>`+
+    `<section class="panel deal-panel"><div class="panel-head"><div><h3>Quotation Pipeline</h3><p>Follow up open quotations. Confirming a deal creates its payment-request Proforma Invoice.</p></div><button data-doc-filter="quotation">View quotations</button></div><div class="deal-list">${pipeline.length?pipeline.map(quotePipelineCard).join(''):'<div class="empty">No quotations yet.</div>'}</div></section>`+
     `<section class="dashboard-grid"><div class="panel"><div class="panel-head"><h3>Recent Documents</h3><button data-go-docs>View all</button></div>${tableDocs(recent,true)}</div><div class="panel"><div class="panel-head"><h3>Upcoming / Active</h3></div><div class="upcoming">${active.length?active.map(eventCard).join(''):'<div class="empty">No upcoming catering services.</div>'}</div></div></section>`;
 };
 
@@ -94,7 +123,7 @@ renderEditor=function(){
   const d=S.current;
   if(!d||d.document_type!=='quotation'||!d.id)return html;
   const s=String(d.status||'Draft');
-  const controls=`<div class="quote-stage-bar"><span>Deal status</span><button class="stage-btn ${s==='Sent'?'active':''}" data-quote-stage="Sent" data-quote-id="${d.id}">Sent</button><button class="stage-btn ${s==='Follow Up'?'active':''}" data-quote-stage="Follow Up" data-quote-id="${d.id}">Follow Up</button><button class="stage-btn win ${QUOTE_WON_STATUSES.includes(s)?'active':''}" data-quote-stage="Confirmed" data-quote-id="${d.id}">Confirm Deal</button><button class="stage-btn lost ${s==='Lost'?'active':''}" data-quote-stage="Lost" data-quote-id="${d.id}">Lost</button></div>`;
+  const controls=`<div class="quote-stage-bar"><span>Deal status</span><button class="stage-btn ${s==='Sent'?'active':''}" data-quote-stage="Sent" data-quote-id="${d.id}">Sent</button><button class="stage-btn ${s==='Follow Up'?'active':''}" data-quote-stage="Follow Up" data-quote-id="${d.id}">Follow Up</button><button class="stage-btn win ${QUOTE_WON_STATUSES.includes(s)?'active':''}" data-quote-stage="Confirmed" data-quote-id="${d.id}">Confirm + PI</button><button class="stage-btn lost ${s==='Lost'?'active':''}" data-quote-stage="Lost" data-quote-id="${d.id}">Lost</button></div>`;
   return html.replace('<div class="editor-shell">',controls+'<div class="editor-shell">');
 };
 
