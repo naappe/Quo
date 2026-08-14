@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240" role="img" aria-labelledby="title desc">
+  <title id="title">White Saffron</title>
+  <desc id="desc">White Saffron circular cafe logo</desc>
+  <circle cx="120" cy="120" r="112" fill="#BE9668"/>
+  <text x="120" y="101" text-anchor="middle" fill="#FFFFFF" font-family="Georgia, 'Times New Roman', serif" font-size="31" font-weight="700" letter-spacing="0.6">WHITE</text>
+  <text x="120" y="146" text-anchor="middle" fill="#FFFFFF" font-family="Georgia, 'Times New Roman', serif" font-size="31" font-weight="700" letter-spacing="0.6">SAFFRON</text>
+</svg>
