@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cafe White Saffron - Beverage Menu</title>
+<meta name="description" content="Cafe White Saffron beverage menu">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f7f5ef;
+  --surface:#fffdf8;
+  --ink:#1f2623;
+  --muted:#68716d;
+  --brand:#195a50;
+  --brand-2:#c18a4d;
+  --line:#dedbd2;
+  --soft:#e9f0ec;
+  --radius:22px;
+  --shadow:0 18px 50px rgba(28,43,38,.08);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"DM Sans",system-ui,sans-serif;line-height:1.45}
+.wrap{width:min(1180px,calc(100% - 32px));margin:auto}
+.topbar{position:sticky;top:0;z-index:10;background:rgba(247,245,239,.88);backdrop-filter:blur(18px);border-bottom:1px solid rgba(31,38,35,.08)}
+.nav{height:72px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:.04em}
+.mark{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--brand);color:white;font:700 13px/1 "Playfair Display",serif;box-shadow:0 8px 24px rgba(25,90,80,.2)}
+.brand small{display:block;color:var(--muted);font-weight:500;letter-spacing:.14em;font-size:10px}
+.nav a{color:var(--ink);text-decoration:none;font-size:13px;font-weight:600}
+.navlinks{display:flex;gap:18px;align-items:center}
+.hero{padding:42px 0 34px}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:26px;align-items:stretch}
+.hero-copy{background:var(--surface);border:1px solid var(--line);border-radius:32px;padding:54px;min-height:520px;display:flex;flex-direction:column;justify-content:center;box-shadow:var(--shadow)}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.18em;color:var(--brand);text-transform:uppercase;margin-bottom:16px}
+h1{font-family:"Playfair Display",serif;font-size:clamp(48px,7vw,86px);line-height:.92;margin:0;letter-spacing:-.035em}
+.hero-copy p{max-width:540px;color:var(--muted);font-size:16px;margin:24px 0 28px}
+.pills{display:flex;flex-wrap:wrap;gap:10px}
+.pill{border:1px solid var(--line);background:white;border-radius:99px;padding:10px 14px;font-size:12px;font-weight:600;color:var(--muted)}
+.hero-media{display:grid;grid-template-rows:1.35fr .65fr;gap:14px;min-height:520px}
+.photo{position:relative;overflow:hidden;border-radius:32px;background:#d9dfdc;min-height:0}
+.photo img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s ease}
+.photo:hover img{transform:scale(1.025)}
+.photo:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(11,31,26,.35))}
+.photo-label{position:absolute;left:22px;bottom:20px;z-index:2;color:white;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.media-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.media-row .photo{border-radius:24px}
+.section{padding:26px 0}
+.section-head{display:flex;align-items:end;justify-content:space-between;gap:20px;margin:0 0 18px}
+.kicker{font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--brand-2);text-transform:uppercase}
+h2{font:700 clamp(32px,5vw,50px)/1 "Playfair Display",serif;margin:7px 0 0;letter-spacing:-.025em}
+.section-note{max-width:420px;color:var(--muted);font-size:13px;text-align:right}
+.menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:0 8px 28px rgba(28,43,38,.035);break-inside:avoid}
+.card h3{display:flex;justify-content:space-between;align-items:center;margin:0 0 18px;font:700 22px/1.1 "Playfair Display",serif}
+.card h3 span{font:700 10px/1 "DM Sans",sans-serif;color:var(--brand);letter-spacing:.12em}
+.item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:baseline;padding:8px 0;border-bottom:1px dashed #e4e2dc}
+.item:last-child{border-bottom:0}
+.item-name{font-size:13.5px;font-weight:600;min-width:0}
+.price{font-size:13px;font-weight:700;color:var(--brand);font-variant-numeric:tabular-nums}
+.feature{grid-column:span 2;display:grid;grid-template-columns:.8fr 1.2fr;padding:0;overflow:hidden}
+.feature-image{min-height:100%;background:#ddd;position:relative}
+.feature-image img{width:100%;height:100%;object-fit:cover;display:block}
+.feature .feature-content{padding:26px}
+.soft-band{margin:34px 0 10px;background:var(--brand);color:white;border-radius:28px;padding:32px 36px;display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center}
+.soft-band h3{font:700 30px/1.05 "Playfair Display",serif;margin:0 0 8px}
+.soft-band p{margin:0;color:rgba(255,255,255,.72);font-size:13px}
+.currency{border:1px solid rgba(255,255,255,.25);padding:12px 16px;border-radius:99px;font-weight:700;font-size:12px;letter-spacing:.14em}
+footer{padding:34px 0 54px;color:var(--muted);font-size:12px}
+.footer-grid{display:flex;justify-content:space-between;gap:20px;border-top:1px solid var(--line);padding-top:22px}
+@media(max-width:900px){
+  .hero-grid{grid-template-columns:1fr}.hero-copy{min-height:auto;padding:40px}.hero-media{min-height:460px}
+  .menu-grid{grid-template-columns:1fr 1fr}.feature{grid-column:span 2}.navlinks{display:none}.section-head{align-items:start;flex-direction:column}.section-note{text-align:left}
+}
+@media(max-width:620px){
+  .wrap{width:min(100% - 20px,1180px)}.hero{padding-top:18px}.hero-copy{padding:30px 24px;border-radius:24px}.hero-media{min-height:360px}.hero-media>.photo{border-radius:24px}
+  .menu-grid{grid-template-columns:1fr}.feature{grid-column:auto;grid-template-columns:1fr}.feature-image{height:200px}.card{padding:20px}.soft-band{grid-template-columns:1fr;padding:26px}.footer-grid{flex-direction:column}.media-row .photo-label{font-size:9px}
+}
+@media print{
+  @page{size:A4;margin:10mm}
+  .topbar{display:none}body{background:#fff}.wrap{width:100%}.hero{padding:0 0 8mm}.hero-grid{grid-template-columns:1fr 1fr;gap:8mm}.hero-copy{min-height:80mm;padding:10mm;box-shadow:none}.hero-media{min-height:80mm}
+  h1{font-size:42pt}.section{padding:4mm 0}.menu-grid{grid-template-columns:repeat(3,1fr);gap:4mm}.card{padding:5mm;box-shadow:none}.feature{grid-column:span 2}.soft-band{margin-top:5mm}footer{padding-bottom:0}.photo img,.feature-image img{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap nav">
+    <div class="brand"><div class="mark">WS</div><div>WHITE SAFFRON<small>CAFE & KITCHEN</small></div></div>
+    <nav class="navlinks"><a href="#fresh">Fresh</a><a href="#shakes">Shakes</a><a href="#coffee">Coffee & Tea</a><a href="#soft">Soft Drinks</a></nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <div class="eyebrow">Cafe White Saffron</div>
+        <h1>Beverage<br>Menu</h1>
+        <p>Fresh fruit, chilled blends, crafted coffee and cafe classics. A cleaner menu system with stronger hierarchy, generous spacing and a warm White Saffron identity.</p>
+        <div class="pills"><span class="pill">Fresh Juice</span><span class="pill">Mojito</span><span class="pill">Smoothies</span><span class="pill">Milk Shakes</span><span class="pill">Coffee</span></div>
+      </div>
+      <div class="hero-media">
+        <div class="photo"><img src="https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=1200&q=85" alt="Fresh cafe drink"><div class="photo-label">Fresh & vibrant</div></div>
+        <div class="media-row">
+          <div class="photo"><img src="https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=900&q=85" alt="Iced coffee"><div class="photo-label">Coffee</div></div>
+          <div class="photo"><img src="https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&w=900&q=85" alt="Milkshake"><div class="photo-label">Shakes</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="fresh">
+    <div class="section-head"><div><div class="kicker">01 / Fresh & Refreshing</div><h2>Fruit forward</h2></div><div class="section-note">Clean, bright and easy to scan. Prices are aligned to the right for faster ordering.</div></div>
+    <div class="menu-grid">
+      <article class="card"><h3>Fresh Juice <span>MVR</span></h3>
+        <div class="item"><span class="item-name">Orange Juice</span><span class="price">50.50</span></div><div class="item"><span class="item-name">Watermelon Juice</span><span class="price">46.29</span></div><div class="item"><span class="item-name">Pineapple Juice</span><span class="price">50.50</span></div><div class="item"><span class="item-name">Mixed Fruit Juice</span><span class="price">46.29</span></div><div class="item"><span class="item-name">Green Apple Juice</span><span class="price">46.29</span></div><div class="item"><span class="item-name">Lime Juice</span><span class="price">32.09</span></div><div class="item"><span class="item-name">Passionfruit Juice</span><span class="price">46.29</span></div>
+      </article>
+      <article class="card"><h3>Mojito <span>MVR</span></h3>
+        <div class="item"><span class="item-name">Pineapple & Coconut</span><span class="price">60.60</span></div><div class="item"><span class="item-name">Pomegranate</span><span class="price">60.60</span></div><div class="item"><span class="item-name">Blueberry</span><span class="price">56.39</span></div><div class="item"><span class="item-name">Gold Kiwi</span><span class="price">58.08</span></div><div class="item"><span class="item-name">Pineapple</span><span class="price">58.08</span></div><div class="item"><span class="item-name">Apple</span><span class="price">58.92</span></div><div class="item"><span class="item-name">Lime & Mint</span><span class="price">54.71</span></div><div class="item"><span class="item-name">Strawberry</span><span class="price">56.39</span></div><div class="item"><span class="item-name">Raspberry</span><span class="price">56.39</span></div><div class="item"><span class="item-name">Mixed Berries</span><span class="price">60.60</span></div><div class="item"><span class="item-name">Passion Fruit</span><span class="price">58.92</span></div><div class="item"><span class="item-name">Watermelon</span><span class="price">58.92</span></div>
+      </article>
+      <article class="card"><h3>Mocktail <span>MVR</span></h3>
+        <div class="item"><span class="item-name">Bahama Swizzle</span><span class="price">64.81</span></div><div class="item"><span class="item-name">Sand Drift</span><span class="price">63.13</span></div><div class="item"><span class="item-name">Energy Burst</span><span class="price">58.92</span></div><div class="item"><span class="item-name">Cool Green</span><span class="price">64.81</span></div><div class="item"><span class="item-name">Infinite Blue</span><span class="price">58.92</span></div><div class="item"><span class="item-name">Beach Drifter</span><span class="price">63.13</span></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" id="shakes">
+    <div class="section-head"><div><div class="kicker">02 / Cold & Creamy</div><h2>Blended favourites</h2></div><div class="section-note">Large categories get more visual weight; smaller groups stay compact so the page feels balanced.</div></div>
+    <div class="menu-grid">
+      <article class="card feature">
+        <div class="feature-image"><img src="https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&w=900&q=85" alt="Milkshake"></div>
+        <div class="feature-content"><h3>Milk Shakes <span>MVR</span></h3>
+          <div class="item"><span class="item-name">Dark Chocolate</span><span class="price">64.81</span></div><div class="item"><span class="item-name">White Chocolate</span><span class="price">54.71</span></div><div class="item"><span class="item-name">Vanilla</span><span class="price">54.71</span></div><div class="item"><span class="item-name">Caramel</span><span class="price">54.71</span></div><div class="item"><span class="item-name">Salted Caramel</span><span class="price">54.71</span></div><div class="item"><span class="item-name">Macadamia</span><span class="price">54.71</span></div><div class="item"><span class="item-name">Hazelnut</span><span class="price">54.71</span></div><div class="item"><span class="item-name">Bubblegum</span><span class="price">50.50</span></div><div class="item"><span class="item-name">Irish Cream</span><span class="price">54.71</span></div><div class="item"><span class="item-name">Almond</span><span class="price">50.50</span></div><div class="item"><span class="item-name">Strawberry</span><span class="price">54.71</span></div><div class="item"><span class="item-name">Blueberry</span><span class="price">58.92</span></div><div class="item"><span class="item-name">Mixed Berries</span><span class="price">58.92</span></div><div class="item"><span class="item-name">Mango & Passion</span><span class="price">64.81</span></div>
+        </div>
+      </article>
+      <article class="card"><h3>Smoothies <span>MVR</span></h3><div class="item"><span class="item-name">Vanilla</span><span class="price">54.71</span></div><div class="item"><span class="item-name">Strawberry</span><span class="price">54.71</span></div><div class="item"><span class="item-name">Blueberry</span><span class="price">54.71</span></div><div class="item"><span class="item-name">Mixed Berries</span><span class="price">64.81</span></div><div class="item"><span class="item-name">Mango</span><span class="price">56.39</span></div><div class="item"><span class="item-name">Mango & Passion</span><span class="price">64.81</span></div></article>
+      <article class="card"><h3>Chocolate Shakes <span>MVR</span></h3><div class="item"><span class="item-name">Nutri-Wholegrain</span><span class="price">63.13</span></div><div class="item"><span class="item-name">Oreo Supreme</span><span class="price">57.24</span></div><div class="item"><span class="item-name">Ferrero Extra</span><span class="price">58.92</span></div><div class="item"><span class="item-name">Irish & Swiss</span><span class="price">60.60</span></div></article>
+      <article class="card"><h3>Frappuccino <span>MVR</span></h3><div class="item"><span class="item-name">Banoffee</span><span class="price">54.71</span></div><div class="item"><span class="item-name">Mocha Frappuccino</span><span class="price">54.71</span></div><div class="item"><span class="item-name">Roche Frappuccino</span><span class="price">58.92</span></div><div class="item"><span class="item-name">Golden Eagle</span><span class="price">54.71</span></div><div class="item"><span class="item-name">Cocomo</span><span class="price">56.39</span></div></article>
+      <article class="card"><h3>Falooda <span>MVR</span></h3><div class="item"><span class="item-name">Classic Falooda</span><span class="price">54.71</span></div><div class="item"><span class="item-name">Mango Falooda</span><span class="price">58.92</span></div></article>
+      <article class="card"><h3>Iced Tea <span>MVR</span></h3><div class="item"><span class="item-name">Iced Lemon Tea</span><span class="price">42.09</span></div><div class="item"><span class="item-name">Strawberry & Peach Iced Tea</span><span class="price">46.29</span></div><div class="item"><span class="item-name">Peach Iced Tea</span><span class="price">42.09</span></div><div class="item"><span class="item-name">Pineapple & Coconut Iced Tea</span><span class="price">46.29</span></div></article>
+    </div>
+  </section>
+
+  <section class="section" id="coffee">
+    <div class="section-head"><div><div class="kicker">03 / Cafe Bar</div><h2>Coffee & tea</h2></div><div class="section-note">A restrained palette keeps the beverages and pricing as the primary information.</div></div>
+    <div class="menu-grid">
+      <article class="card"><h3>Coffee <span>MVR</span></h3>
+        <div class="item"><span class="item-name">Nescafe Black</span><span class="price">13.47</span></div><div class="item"><span class="item-name">Nescafe Milk</span><span class="price">16.83</span></div><div class="item"><span class="item-name">Lavazza Black</span><span class="price">16.83</span></div><div class="item"><span class="item-name">Lavazza Milk</span><span class="price">21.04</span></div><div class="item"><span class="item-name">Lavazza Espresso (Single)</span><span class="price">16.83</span></div><div class="item"><span class="item-name">Lavazza Espresso (Double)</span><span class="price">21.04</span></div><div class="item"><span class="item-name">Bar2000 Black</span><span class="price">16.83</span></div><div class="item"><span class="item-name">Bar2000 Milk</span><span class="price">21.04</span></div><div class="item"><span class="item-name">Bar2000 Espresso (Single)</span><span class="price">16.83</span></div><div class="item"><span class="item-name">Bar2000 Espresso (Double)</span><span class="price">21.04</span></div><div class="item"><span class="item-name">Cappuccino</span><span class="price">29.46</span></div><div class="item"><span class="item-name">Americano (Hot or Cold)</span><span class="price">18.52</span></div><div class="item"><span class="item-name">Cappuccino Latte</span><span class="price">29.46</span></div><div class="item"><span class="item-name">Dalgona Coffee</span><span class="price">46.29</span></div>
+      </article>
+      <article class="card feature"><div class="feature-image"><img src="https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=900&q=85" alt="Coffee"></div><div class="feature-content"><h3>Classic Drinks <span>MVR</span></h3><div class="item"><span class="item-name">Hot Chocolate</span><span class="price">37.88</span></div><div class="item"><span class="item-name">Ice Milo</span><span class="price">33.67</span></div><div class="item"><span class="item-name">Cardamom Chai</span><span class="price">16.90</span></div><div class="item"><span class="item-name">Masala Chai</span><span class="price">16.90</span></div><div class="item"><span class="item-name">Black Tea</span><span class="price">8.42</span></div><div class="item"><span class="item-name">Green Tea</span><span class="price">12.63</span></div><div class="item"><span class="item-name">Milk Tea</span><span class="price">16.83</span></div><div class="item"><span class="item-name">Ginger Tea</span><span class="price">12.63</span></div><div class="item"><span class="item-name">Lemon Tea</span><span class="price">12.63</span></div><div class="item"><span class="item-name">Ginger Honey Lemon Tea</span><span class="price">16.83</span></div><div class="item"><span class="item-name">Hot Milo</span><span class="price">33.67</span></div><div class="item"><span class="item-name">Iced Coffee</span><span class="price">42.09</span></div><div class="item"><span class="item-name">Coke Float</span><span class="price">42.09</span></div><div class="item"><span class="item-name">Granini</span><span class="price">25.25</span></div><div class="item"><span class="item-name">Sunquick Juice</span><span class="price">10.10</span></div></div></article>
+    </div>
+  </section>
+
+  <section class="section" id="soft">
+    <div class="section-head"><div><div class="kicker">04 / Chilled</div><h2>Soft drinks</h2></div></div>
+    <div class="menu-grid">
+      <article class="card"><h3>Soft Drinks <span>MVR</span></h3><div class="item"><span class="item-name">Coca Cola (180ml)</span><span class="price">21.04</span></div><div class="item"><span class="item-name">Coca Cola (330ml)</span><span class="price">25.25</span></div><div class="item"><span class="item-name">Diet Coca Cola (330ml)</span><span class="price">25.25</span></div><div class="item"><span class="item-name">Soda Water (330ml)</span><span class="price">25.25</span></div><div class="item"><span class="item-name">Sprite (180ml)</span><span class="price">21.04</span></div><div class="item"><span class="item-name">Sprite (330ml)</span><span class="price">25.25</span></div><div class="item"><span class="item-name">Fanta Orange (180ml)</span><span class="price">21.04</span></div><div class="item"><span class="item-name">Fanta Orange (330ml)</span><span class="price">25.25</span></div><div class="item"><span class="item-name">Bitter Lemon (330ml)</span><span class="price">25.25</span></div><div class="item"><span class="item-name">Red Bull</span><span class="price">42.09</span></div><div class="item"><span class="item-name">XL</span><span class="price">33.67</span></div></article>
+      <article class="card"><h3>Fruity Espresso <span>MVR</span></h3><div class="item"><span class="item-name">Peach Ice Espresso</span><span class="price">46.29</span></div><div class="item"><span class="item-name">Kiwi Espresso</span><span class="price">46.29</span></div></article>
+      <article class="card" style="background:var(--soft);border-color:transparent"><h3>Menu note <span>WS</span></h3><p style="margin:0;color:var(--muted);font-size:13px">This digital layout is optimized for phone viewing and includes print styles for A4 output. The visual system uses one primary brand green, one warm saffron accent and neutral surfaces so the menu stays modern without becoming colourful or busy.</p></article>
+    </div>
+    <div class="soft-band"><div><h3>Good ingredients. Great memories.</h3><p>Cafe White Saffron · Beverage Menu</p></div><div class="currency">ALL PRICES IN MVR</div></div>
+  </section>
+</main>
+<footer><div class="wrap footer-grid"><span>CAFE WHITE SAFFRON</span><span>DINE IN · TAKEAWAY · EVENTS</span></div></footer>
+</body>
+</html>
