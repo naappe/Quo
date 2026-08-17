@@ -19,7 +19,7 @@
 
   function isSparse(d){
     const items=(d.items||[]).filter(i=>String(i.description||'').trim()).length;
-    const terms=String(d.extra_terms||'').trim();
+    const terms=d.document_type==='receipt'?'':String(d.extra_terms||'').trim();
     return items<=2&&!terms&&!d.service_enabled;
   }
 
@@ -158,7 +158,7 @@
 
   function renderMain(d,pageCount){
     const c=calc(d),set=S.settings,t=CFG[d.document_type];
-    const terms=String(d.extra_terms||'').trim();
+    const terms=d.document_type==='receipt'?'':String(d.extra_terms||'').trim();
     const sparse=isSparse(d)?' q26-sparse':'';
     return `<section class="pdf-page quo-v26 q26-main${sparse}"><div class="q26-topline"></div>
       <header class="q26-head">
