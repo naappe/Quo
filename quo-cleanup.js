@@ -1,4 +1,4 @@
-/* Quo v31 - final editor cleanup and legacy-conflict hotfix. */
+/* Quo v32 - final editor cleanup and legacy-conflict hotfix. */
 (function(){
   const FIXED_PREPARER='White Saffron';
 
@@ -21,6 +21,25 @@
   try{
     optionalEditorCard=function(n,title,body){
       return editorCard(n,title,body);
+    };
+  }catch(e){}
+
+  /* Menu preview should never become a blank page just because the user typed
+     simple lines instead of the old strict Day 1 / Meal: Items syntax. */
+  try{
+    const previousParseMenu=parseMenu;
+    parseMenu=function(text){
+      const raw=String(text||'').trim();
+      if(!raw)return [];
+      const parsed=previousParseMenu(raw);
+      if(parsed.length&&parsed.some(day=>Array.isArray(day.meals)&&day.meals.length))return parsed;
+      const lines=raw.split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
+      const meals=lines.map((line,i)=>{
+        const colon=line.indexOf(':');
+        if(colon>0)return {name:line.slice(0,colon).trim(),time:'',items:line.slice(colon+1).trim()||'-'};
+        return {name:`Item ${i+1}`,time:'',items:line};
+      });
+      return [{label:'Day 1',meals}];
     };
   }catch(e){}
 
@@ -75,9 +94,9 @@
     };
   }catch(e){}
 
-  if(!document.getElementById('quoCleanupV31Style')){
+  if(!document.getElementById('quoCleanupV32Style')){
     const st=document.createElement('style');
-    st.id='quoCleanupV31Style';
+    st.id='quoCleanupV32Style';
     st.textContent=`
       /* Remove obsolete guidance and section controls. */
       .prepared-by,.fill-guide,.section-warning,.runtime-number-hint,
