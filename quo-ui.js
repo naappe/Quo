@@ -14,25 +14,28 @@ function renderPrint(d){const c=calc(d),set=S.settings,t=CFG[d.document_type];co
 }
 async function exportPDF(){readEditor();if(S.current.id){const ok=await saveCurrent(false);if(!ok)return}else{const ok=await saveCurrent(false);if(!ok)return}renderPrint(S.current);const old=document.title;document.title=`${S.current.document_number}-${S.current.customer_name||'document'}`;setTimeout(()=>{window.print();setTimeout(()=>{document.title=old},250)},50)}
 
+function updateEditorSaveState(){const el=$('[data-save-state]');if(!el||!S.current)return;const dirty=!!S.editorDirty;el.textContent=dirty?'Unsaved changes':(S.current.id?'All changes saved':'Not saved yet');el.classList.toggle('dirty',dirty);el.classList.toggle('saved',!dirty&&!!S.current.id);el.classList.toggle('new',!dirty&&!S.current.id)}
+function markEditorDirty(){S.editorDirty=true;updateEditorSaveState()}
 function bindDynamic(){
- $$('[data-new]').forEach(b=>b.onclick=openModal);$$('[data-go-docs]').forEach(b=>b.onclick=()=>goDocuments('all'));$$('[data-open]').forEach(x=>x.onclick=()=>{const d=S.docs.find(v=>v.id===x.dataset.open);if(d)openEditor(d)});$$('[data-doc-filter]').forEach(b=>b.onclick=()=>goDocuments(b.dataset.docFilter));
+ $$('[data-new]').forEach(b=>b.onclick=openModal);$$('[data-go-docs]').forEach(b=>b.onclick=()=>goDocuments('all'));$$('[data-open]').forEach(x=>x.onclick=()=>{const d=S.docs.find(v=>v.id===x.dataset.open);if(d){S.editorDirty=false;openEditor(d)}});$$('[data-doc-filter]').forEach(b=>b.onclick=()=>goDocuments(b.dataset.docFilter));
  const search=$('#docSearch');if(search)search.oninput=e=>{S.search=e.target.value;render();const n=$('#docSearch');if(n){n.focus();n.setSelectionRange(S.search.length,S.search.length)}};
  const back=$('[data-back]');if(back)back.onclick=()=>goDocuments(S.current?.document_type||'all');
  const save=$('[data-save]');if(save)save.onclick=()=>saveCurrent(true);const pdf=$('[data-pdf]');if(pdf)pdf.onclick=exportPDF;
- const dup=$('[data-duplicate]');if(dup)dup.onclick=duplicateCurrent;const toggle=$('[data-toggle-convert]');if(toggle)toggle.onclick=()=>{S.convertOpen=!S.convertOpen;render()};$$('[data-convert]').forEach(b=>b.onclick=()=>convertCurrent(b.dataset.convert));const cr=$('[data-create-receipt]');if(cr)cr.onclick=receiptFromCurrent;
- $$('[data-field]').forEach(el=>{el.oninput=()=>{readEditor();renderEditorSoft()};el.onchange=()=>{readEditor();render()}});
- const add=$('[data-add-item]');if(add)add.onclick=()=>{readEditor();S.current.items.push({description:'',qty:1,unit:'Pax',price:0});render()};$$('[data-remove-item]').forEach(b=>b.onclick=()=>{readEditor();if(S.current.items.length>1)S.current.items.splice(+b.dataset.removeItem,1);render()});$$('[data-item-field]').forEach(el=>el.oninput=()=>{readEditor();renderEditorSoft()});
+ const dup=$('[data-duplicate]');if(dup)dup.onclick=duplicateCurrent;$$('[data-convert]').forEach(b=>b.onclick=()=>convertCurrent(b.dataset.convert));const cr=$('[data-create-receipt]');if(cr)cr.onclick=receiptFromCurrent;
+ $$('[data-section-toggle]').forEach(b=>b.onclick=()=>{const card=b.closest('.optional-card');if(!card)return;const willOpen=card.classList.contains('collapsed');card.classList.toggle('collapsed',!willOpen);b.setAttribute('aria-expanded',willOpen?'true':'false');b.textContent=willOpen?'Hide':'Show';const key=card.dataset.sectionKey;if(key)localStorage.setItem(key,willOpen?'open':'closed')});
+ $$('[data-field]').forEach(el=>{el.oninput=()=>{readEditor();markEditorDirty();renderEditorSoft()};el.onchange=()=>{readEditor();markEditorDirty();render()}});
+ const add=$('[data-add-item]');if(add)add.onclick=()=>{readEditor();S.current.items.push({description:'',qty:1,unit:'Pax',price:0});markEditorDirty();render()};$$('[data-remove-item]').forEach(b=>b.onclick=()=>{readEditor();if(S.current.items.length>1)S.current.items.splice(+b.dataset.removeItem,1);markEditorDirty();render()});$$('[data-item-field]').forEach(el=>el.oninput=()=>{readEditor();markEditorDirty();renderEditorSoft()});
  const ss=$('[data-save-settings]');if(ss)ss.onclick=saveSettings;
 }
-function renderEditorSoft(){const d=S.current;if(!d)return;const c=calc(d);const total=$('.totals-mini b');if(total)total.textContent=money(c.total,d.currency);$$('[data-item]').forEach((row,i)=>{const a=row.querySelector('.amount');if(a)a.textContent=moneyOnly(num(d.items[i]?.qty)*num(d.items[i]?.price))});const preview=$('.paper-mini');if(preview){const holder=preview.parentElement;const tmp=document.createElement('div');tmp.innerHTML=miniPreview(d);holder.replaceChild(tmp.firstElementChild,preview)}const ev=$('#eventFields');if(ev)ev.classList.toggle('hidden',!d.service_enabled);const mf=$('#menuFields');if(mf)mf.classList.toggle('hidden',!d.include_menu);const af=$('#advanceFields');if(af)af.classList.toggle('hidden',!d.use_advance)}
-function goDocuments(filter='all'){S.view='documents';S.filter=filter;S.current=null;S.search='';render();scrollTo(0,0)}
+function renderEditorSoft(){const d=S.current;if(!d)return;const c=calc(d);const total=$('.totals-mini b');if(total)total.textContent=money(c.total,d.currency);$$('[data-item]').forEach((row,i)=>{const a=row.querySelector('.amount');if(a)a.textContent=moneyOnly(num(d.items[i]?.qty)*num(d.items[i]?.price))});const preview=$('.paper-mini');if(preview){const holder=preview.parentElement;const tmp=document.createElement('div');tmp.innerHTML=miniPreview(d);holder.replaceChild(tmp.firstElementChild,preview)}const ev=$('#eventFields');if(ev)ev.classList.toggle('hidden',!d.service_enabled);const mf=$('#menuFields');if(mf)mf.classList.toggle('hidden',!d.include_menu);const af=$('#advanceFields');if(af)af.classList.toggle('hidden',!d.use_advance);updateEditorSaveState()}
+function goDocuments(filter='all'){S.view='documents';S.filter=filter;S.current=null;S.editorDirty=false;S.search='';render();scrollTo(0,0)}
 function openModal(){$('#newDocModal').classList.remove('hidden')}
 function closeModal(){$('#newDocModal').classList.add('hidden')}
 
 function globalEvents(){
  $('#preparedBy').value=S.preparedBy;$('#preparedBy').addEventListener('input',prepared);$('#newDocBtn').onclick=openModal;$('#menuBtn').onclick=()=>$('#sidebar').classList.toggle('open');
- $$('[data-view]').forEach(b=>b.onclick=()=>{const v=b.dataset.view;if(v==='documents'){goDocuments(b.dataset.filter||'all')}else{S.view=v;S.current=null;render();scrollTo(0,0)}$('#sidebar').classList.remove('open')});
- $$('[data-close-modal]').forEach(b=>b.onclick=closeModal);$('#newDocModal').addEventListener('click',e=>{if(e.target===$('#newDocModal'))closeModal()});$$('[data-create]').forEach(b=>b.onclick=()=>newDocument(b.dataset.create));
+ $$('[data-view]').forEach(b=>b.onclick=()=>{const v=b.dataset.view;if(v==='documents'){goDocuments(b.dataset.filter||'all')}else{S.view=v;S.current=null;S.editorDirty=false;render();scrollTo(0,0)}$('#sidebar').classList.remove('open')});
+ $$('[data-close-modal]').forEach(b=>b.onclick=closeModal);$('#newDocModal').addEventListener('click',e=>{if(e.target===$('#newDocModal'))closeModal()});$$('[data-create]').forEach(b=>b.onclick=()=>{S.editorDirty=false;newDocument(b.dataset.create)});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();S.convertOpen=false}})
 }
 
