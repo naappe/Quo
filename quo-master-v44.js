@@ -1,7 +1,7 @@
-/* Quo v48 - canonical editor master.
-   Replaces the old editor-final, cleanup, trim and editor-order patch stack. */
+/* Quo v50 - canonical editor master.
+   Keeps optional Notes & Terms hidden until the document needs them. */
 (function(){
-  const VERSION='48';
+  const VERSION='50';
   const PREPARER='White Saffron';
   const ORDER=['document','customer','items','event / service','menu','notes & terms'];
 
@@ -29,6 +29,63 @@
 
   function titleOf(card){return String(card?.querySelector('header h3')?.textContent||'').trim().toLowerCase()}
 
+  function suggestedTerms(type){
+    if(type==='quotation'){
+      const saved=String(S.settings?.quotation_terms||'').trim();
+      if(saved)return saved;
+      return 'This quotation is valid until the date shown above. Final menu, guest count, venue and service details must be confirmed before service. Changes after confirmation may affect pricing or availability. Only the items and services listed in this quotation are included.';
+    }
+    if(type==='proforma'){
+      return 'This proforma invoice is a payment request and does not confirm that payment has been received. Please use the document number as the payment reference. Final service details remain subject to the agreed quotation or order.';
+    }
+    if(type==='invoice'){
+      const saved=String(S.settings?.invoice_terms||'').trim();
+      if(saved)return saved;
+      return 'Please use the invoice number as the payment reference. Any discrepancy should be reported promptly. Payment status reflects payments recorded against this invoice. A receipt is issued for each recorded payment.';
+    }
+    return '';
+  }
+
+  function configureTermsCard(host){
+    const main=host.querySelector('.editor-main');if(!main)return;
+    const card=[...main.children].find(el=>el.classList?.contains('editor-card')&&titleOf(el)==='notes & terms');
+    if(!card)return;
+
+    if(S.current?.document_type==='receipt'){
+      card.remove();
+      return;
+    }
+
+    const hasTerms=!!String(S.current?.extra_terms||'').trim();
+    const header=card.querySelector('header');
+    const body=card.querySelector('.card-body');
+    card.classList.add('quo-terms-card');
+    card.classList.toggle('quo-terms-empty',!hasTerms);
+    card.classList.remove('collapsed');
+
+    const title=header?.querySelector('h3');
+    if(title)title.textContent='Notes & Terms';
+    header?.querySelectorAll('.section-toggle,[data-section-toggle],.quo-terms-action').forEach(el=>el.remove());
+    if(header){
+      const b=document.createElement('button');
+      b.type='button';b.className='quo-terms-action';
+      if(hasTerms){b.dataset.quoTermsRemove='';b.textContent='Remove from PDF'}
+      else{b.dataset.quoTermsAdd='';b.textContent='Add Terms'}
+      header.appendChild(b);
+    }
+    if(body){
+      body.hidden=!hasTerms;
+      const ta=body.querySelector('[data-field="extra_terms"]');
+      if(ta)ta.placeholder='Add only terms that are relevant to this document.';
+    }
+    if(!hasTerms){
+      const note=document.createElement('p');
+      note.className='quo-terms-empty-note';
+      note.textContent='Optional - hidden from the customer PDF until you add it.';
+      card.appendChild(note);
+    }
+  }
+
   function masterEditorHTML(html){
     if(typeof html!=='string'||typeof S==='undefined'||!S.current)return html;
     const host=document.createElement('div');host.innerHTML=html;
@@ -49,6 +106,8 @@
       live.filter(card=>!ORDER.includes(titleOf(card))).forEach(card=>main.appendChild(card));
       main.classList.add('quo-master-editor');
     }
+
+    configureTermsCard(host);
 
     const actions=host.querySelector('.editor-actions');
     if(actions){
@@ -100,8 +159,8 @@
     };
   }catch(e){}
 
-  if(!document.getElementById('quoMasterV48Style')){
-    const st=document.createElement('style');st.id='quoMasterV48Style';st.textContent=`
+  if(!document.getElementById('quoMasterV50Style')){
+    const st=document.createElement('style');st.id='quoMasterV50Style';st.textContent=`
       .editor-actions:has(.editor-more[open]){padding-bottom:0!important}
       .editor-more[open] .editor-more-menu{display:block!important;position:absolute!important;top:43px!important;right:0!important;left:auto!important;width:220px!important;min-width:220px!important;padding:6px!important;background:#fff!important;border:1px solid #dce2df!important;border-radius:9px!important;box-shadow:0 14px 36px rgba(25,39,36,.14)!important;z-index:1000!important}
       .editor-more[open] .editor-more-menu .btn{display:block!important;width:100%!important;min-height:34px!important;margin:0!important;padding:8px 10px!important;border:0!important;background:#fff!important;text-align:left!important}
@@ -109,11 +168,27 @@
       .editor-more[open] .editor-more-menu .btn.danger{color:#9c4545!important}
       .editor-more[open] .editor-more-menu .btn.danger:hover{background:#fff3f2!important}
       .quote-stage-bar,.prepared-by,.fill-guide,.section-warning,.runtime-number-hint,.section-toggle,[data-section-toggle],.section-no{display:none!important}
+      .quo-terms-card header{align-items:center!important}.quo-terms-action{margin-left:auto;border:0;background:transparent;color:#2d6d64;font-size:9px;font-weight:850;cursor:pointer;padding:5px 7px;border-radius:6px}.quo-terms-action:hover{background:#edf6f3}.quo-terms-empty{min-height:0!important}.quo-terms-empty .card-body{display:none!important}.quo-terms-empty-note{margin:-2px 16px 13px;color:#89918e;font-size:9.5px;line-height:1.4}
       @media(max-width:820px){.editor-more[open] .editor-more-menu{left:0!important;right:auto!important;width:min(240px,calc(100vw - 32px))!important;min-width:0!important}}
     `;document.head.appendChild(st);
   }
 
   document.addEventListener('click',e=>{
+    const add=e.target.closest('[data-quo-terms-add]');
+    if(add&&S.current){
+      e.preventDefault();e.stopPropagation();
+      S.current.extra_terms=suggestedTerms(S.current.document_type);
+      S.editorDirty=true;render();
+      setTimeout(()=>document.querySelector('[data-field="extra_terms"]')?.focus(),0);
+      return;
+    }
+    const remove=e.target.closest('[data-quo-terms-remove]');
+    if(remove&&S.current){
+      e.preventDefault();e.stopPropagation();
+      if(!confirm('Remove Notes & Terms from this document and its PDF?'))return;
+      S.current.extra_terms='';S.editorDirty=true;render();
+      return;
+    }
     const open=document.querySelector('.editor-more[open]');
     if(open&&!open.contains(e.target))open.removeAttribute('open');
   });
