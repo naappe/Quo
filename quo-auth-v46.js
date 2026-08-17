@@ -1,7 +1,6 @@
 /* Quo v46 - authenticated access, admin-only settings/trash and staff user management. */
 (function(){
   const SESSION_KEY='quo_auth_session_v1';
-  const ADMIN_EMAIL='naappe@gmail.com';
   let booted=false;
   let usersLoading=false;
 
@@ -81,7 +80,7 @@
   }
 
   async function roleFor(user){
-    const r=await sb.from('user_roles').select('user_id,role,is_active,display_name,username').eq('user_id',user.id).maybeSingle();
+    const r=await sb.from('quo_users').select('user_id,role,is_active,display_name,username').eq('user_id',user.id).maybeSingle();
     if(r.error||!r.data||!r.data.is_active)return null;
     return r.data;
   }
