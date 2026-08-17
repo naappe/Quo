@@ -1,62 +1,38 @@
-/* Quo v38 - conversions immediately create and number the target document. */
+/* Quo v41 - atomic, deal-aware document conversion via Supabase RPC. */
 (function(){
-  async function createConvertedDocument(type){
+  async function convertAtomic(type){
     if(typeof S==='undefined'||!S.current)return;
-
     try{if(typeof readEditor==='function')readEditor()}catch(e){}
-    let source=S.current;
 
-    /* A conversion must point to a real saved source document. Save any new or
-       edited source first so the relationship and copied data are reliable. */
-    if(!source.id||S.editorDirty){
+    if(!S.current.id||S.editorDirty){
       const ok=await saveCurrent(false);
       if(!ok)return;
-      source=S.current;
     }
 
-    /* Do not accidentally create the same conversion twice. */
-    const existing=(S.docs||[]).find(d=>
-      d.source_document_id===source.id&&
-      d.document_type===type&&
-      d.status!=='Cancelled'
-    );
-    if(existing){
-      openEditor(existing);
-      toast(`${existing.document_number} already exists for ${source.document_number}`);
-      return;
+    const source={...S.current};
+    if(source.document_type==='quotation'&&!['proforma','invoice'].includes(type))return;
+    if(source.document_type==='proforma'&&type!=='invoice')return;
+
+    try{
+      const r=await sb.rpc('quo_convert_document',{
+        p_source_id:source.id,
+        p_target_type:type,
+        p_actor:'White Saffron'
+      });
+      if(r.error)throw r.error;
+      const result=r.data||{};
+      const target=result.document;
+      if(!target?.id)throw new Error('Converted document was not returned.');
+      await refreshDocs();
+      const current=S.docs.find(d=>d.id===target.id)||target;
+      S.editorDirty=false;
+      openEditor(current);
+      toast(result.created===false?`${current.document_number} already exists for this deal`:`${current.document_number} created from ${source.document_number}`);
+    }catch(e){
+      console.error(e);
+      alert('Conversion failed: '+(e?.message||'Unknown error'));
     }
-
-    const sourceNumber=source.document_number;
-    const copy=blankDoc(type,source);
-    copy.source_document_id=source.id;
-    copy.creation_date=isoToday();
-
-    if(type==='invoice'){
-      copy.status='Draft';
-      copy.use_advance=false;
-      copy.paid_amount=0;
-      copy.payment_reference='';
-      copy.extra_terms=S.settings.invoice_terms||copy.extra_terms;
-    }else if(type==='proforma'){
-      copy.status='Awaiting Payment';
-      copy.paid_amount=0;
-      copy.payment_reference='';
-    }
-
-    S.editorDirty=false;
-    openEditor(copy);
-
-    /* First insert is where Supabase atomically assigns INV/PI-YYYY-####. */
-    const ok=await saveCurrent(false);
-    if(!ok)return;
-
-    S.editorDirty=false;
-    toast(`${S.current.document_number} created from ${sourceNumber}`);
-    render();
   }
 
-  /* Replace the old preview-only conversion behavior. */
-  convertCurrent=function(type){
-    return createConvertedDocument(type);
-  };
+  convertCurrent=function(type){return convertAtomic(type)};
 })();
