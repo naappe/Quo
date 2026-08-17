@@ -86,10 +86,12 @@
     let editorAdded=false;
     for(const m of mutations){for(const node of m.addedNodes){if(node.nodeType!==1)continue;if(node.matches?.('.preview-card')||node.querySelector?.('.preview-card'))editorAdded=true;if(node.matches?.('.preview-scale-shell')||node.querySelector?.('.preview-scale-shell'))attachPreviewShells(node.matches?.('.preview-scale-shell')?(node.parentElement||document):node)}}
     if(editorAdded)schedulePreview(20);enhanceFullPreview();
+    const modal=fullModal();if(modal&&!modal.classList.contains('hidden')&&fullPages().length)showFullPage(fullPageIndex);
   });
   mutationObserver.observe(document.documentElement,{childList:true,subtree:true});
 
   try{const previousOpen=openEditor;openEditor=function(){const result=previousOpen.apply(this,arguments);schedulePreview(30);return result}}catch(e){}
+  try{const previousFull=openFullPreview;openFullPreview=function(){const result=previousFull.apply(this,arguments);setTimeout(()=>{enhanceFullPreview();showFullPage(0)},0);return result}}catch(e){}
 
   if(!document.getElementById('quoPreviewV44Style')){
     const st=document.createElement('style');st.id='quoPreviewV44Style';st.textContent=`
