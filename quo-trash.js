@@ -1,4 +1,4 @@
-/* Quo v46 - soft delete for all documents; Trash and restore are admin-only. */
+/* Quo v47 - soft delete for all documents; Trash and restore are admin-only. */
 (function(){
   const q=s=>document.querySelector(s), qa=s=>[...document.querySelectorAll(s)];
   const isAdmin=()=>typeof S!=='undefined'&&S.role==='admin';
@@ -10,7 +10,7 @@
     const extra=d.document_type==='receipt'?'\n\nDeleting a receipt will automatically recalculate the related invoice payment balance.':'';
     if(!confirm(`Move ${d.document_number} to Trash?\n\nThis ${label} will be kept for 30 days.${extra}`))return;
     const name=(typeof prepared==='function'?prepared():S.displayName||S.preparedBy)||'Unknown';
-    const r=await sb.from('quo_documents').update({deleted_at:new Date().toISOString(),deleted_by_name:name,updated_by_name:name}).eq('id',id);
+    const r=await sb.rpc('quo_soft_delete_document',{p_document_id:id,p_actor:name});
     if(r.error){alert('Could not move document to Trash: '+r.error.message);return;}
     if(typeof refreshDocs==='function')await refreshDocs();
     if(S.current?.id===id)S.current=null;
