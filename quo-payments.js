@@ -1,4 +1,4 @@
-/* Quo v39 - controlled invoice payments with automatic receipt creation. */
+/* Quo v40 - controlled invoice payments with automatic receipt creation. */
 (function(){
   const EPS=0.005;
 
@@ -40,6 +40,18 @@
   }
 
   let paymentInvoiceId=null;
+
+  async function beginRecordPayment(invoiceId){
+    if(typeof S==='undefined'||!S.current||S.current.id!==invoiceId)return;
+    /* A payment must be recorded against the saved invoice total, never against
+       unsaved editor values. Save pending invoice edits first. */
+    if(S.editorDirty){
+      const ok=await saveCurrent(false);
+      if(!ok)return;
+      invoiceId=S.current?.id||invoiceId;
+    }
+    openPaymentModal(invoiceId);
+  }
 
   function openPaymentModal(invoiceId){
     ensurePaymentModal();
@@ -160,7 +172,7 @@
         const b=document.createElement('button');
         b.type='button';b.className='btn quo-record-payment';b.dataset.recordPayment=d.id;b.textContent='Record Payment';
         if(more)more.insertAdjacentElement('beforebegin',b);else actions.appendChild(b);
-        b.onclick=()=>openPaymentModal(d.id);
+        b.onclick=()=>beginRecordPayment(d.id);
       }
       if(c.balance<=EPS&&!actions.querySelector('.quo-paid-indicator')){
         const more=actions.querySelector('.editor-more');
@@ -199,9 +211,9 @@
     enhanceInvoicePaymentUI();
   };
 
-  if(!document.getElementById('quoPaymentsV39Style')){
+  if(!document.getElementById('quoPaymentsV40Style')){
     const st=document.createElement('style');
-    st.id='quoPaymentsV39Style';
+    st.id='quoPaymentsV40Style';
     st.textContent=`
       .quo-record-payment{border-color:#b8d6c6!important;background:#f1f8f4!important;color:#276446!important;font-weight:700!important}
       .quo-paid-indicator{display:inline-flex;align-items:center;min-height:36px;padding:0 12px;border:1px solid #cfe5d8;border-radius:7px;background:#edf7f1;color:#397a56;font-size:10px;font-weight:800}
