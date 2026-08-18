@@ -1,7 +1,7 @@
-/* Quo v62 - existing customer picker with name/mobile matching. */
+/* Quo v63 - integrated customer autocomplete for name and mobile. */
 (function(){
-  function clean(value){return String(value||'').trim()}
-  function normName(value){return clean(value).toLowerCase().replace(/\s+/g,' ')}
+  const clean=value=>String(value||'').trim();
+  const normName=value=>clean(value).toLowerCase().replace(/\s+/g,' ');
   function normPhone(value){
     let digits=clean(value).replace(/\D/g,'');
     if(digits.length===10&&digits.startsWith('960'))digits=digits.slice(3);
@@ -14,11 +14,11 @@
       .sort((a,b)=>String(b.updated_at||b.created_at||'').localeCompare(String(a.updated_at||a.created_at||'')));
     const map=new Map();
     for(const d of docs){
-      const phone=normPhone(d.customer_phone);
-      const name=normName(d.customer_name);
+      const phone=normPhone(d.customer_phone), name=normName(d.customer_name);
       const key=phone?`p:${phone}`:`n:${name}`;
-      if(!map.has(key))map.set(key,{name:clean(d.customer_name),phone:clean(d.customer_phone),address:clean(d.customer_address),updated_at:d.updated_at||d.created_at||'',count:1});
-      else{
+      if(!map.has(key)){
+        map.set(key,{name:clean(d.customer_name),phone:clean(d.customer_phone),address:clean(d.customer_address),updatedAt:d.updated_at||d.created_at||'',count:1});
+      }else{
         const row=map.get(key);row.count++;
         if(!row.phone&&clean(d.customer_phone))row.phone=clean(d.customer_phone);
         if(!row.address&&clean(d.customer_address))row.address=clean(d.customer_address);
@@ -27,22 +27,45 @@
     return [...map.values()];
   }
 
-  function customerMatches(row,query){
-    const q=clean(query).toLowerCase();
-    if(!q)return true;
-    const digits=normPhone(q);
-    const name=normName(q);
-    return normName(row.name).includes(name)||clean(row.address).toLowerCase().includes(q)||(digits&&normPhone(row.phone).includes(digits));
+  function score(row,query,mode){
+    const q=clean(query), qName=normName(q), qPhone=normPhone(q);
+    const name=normName(row.name), phone=normPhone(row.phone), address=clean(row.address).toLowerCase();
+    if(!q)return 1;
+    let s=0;
+    if(qPhone){
+      if(phone===qPhone)s=120;
+      else if(phone.startsWith(qPhone))s=95;
+      else if(phone.includes(qPhone))s=80;
+    }
+    if(qName){
+      if(name===qName)s=Math.max(s,110);
+      else if(name.startsWith(qName))s=Math.max(s,90);
+      else if(name.includes(qName))s=Math.max(s,70);
+      else if(address.includes(qName))s=Math.max(s,40);
+    }
+    if(mode==='phone'&&qPhone&&phone===qPhone)s+=20;
+    if(mode==='name'&&qName&&name===qName)s+=20;
+    return s;
   }
 
-  function exactPhoneCustomer(value){
-    const phone=normPhone(value);if(!phone)return null;
-    return customerRows().find(row=>normPhone(row.phone)===phone)||null;
+  function matches(query,mode){
+    const q=clean(query);
+    return customerRows()
+      .map(row=>({row,score:score(row,q,mode)}))
+      .filter(x=>q?x.score>0:true)
+      .sort((a,b)=>b.score-a.score||String(b.row.updatedAt).localeCompare(String(a.row.updatedAt)))
+      .slice(0,q?6:5)
+      .map(x=>x.row);
   }
 
   function setDirty(){
     if(typeof S!=='undefined')S.editorDirty=true;
     try{if(typeof updateEditorSaveState==='function')updateEditorSaveState()}catch(e){}
+  }
+
+  function closeAll(){
+    document.querySelectorAll('.quo-customer-smart-results').forEach(box=>{box.hidden=true;box.innerHTML=''});
+    document.querySelectorAll('.quo-customer-smart-field').forEach(field=>field.classList.remove('quo-customer-open'));
   }
 
   function useCustomer(row){
@@ -56,88 +79,125 @@
     S.current.customer_name=row.name||'';
     S.current.customer_phone=row.phone||'';
     S.current.customer_address=row.address||'';
-    setDirty();
-    const search=document.querySelector('[data-customer-search]');
-    if(search)search.value=row.name||row.phone||'';
-    renderResults(search?.value||'',false);
+    setDirty();closeAll();clearMatchHint();
     try{window.quoRefreshLivePreview?.()}catch(e){}
     try{toast?.(`${row.name} selected`)}catch(e){}
   }
 
-  function resultHTML(rows){
-    if(!rows.length)return '<div class="quo-customer-empty">No existing customer match.</div>';
-    return rows.slice(0,6).map((row,i)=>`<button type="button" class="quo-customer-result" data-customer-pick="${i}"><span><b>${esc(row.name)}</b>${row.phone?`<small>${esc(row.phone)}</small>`:''}</span>${row.address?`<em>${esc(row.address)}</em>`:''}</button>`).join('');
+  function resultHTML(rows,query,mode){
+    if(!rows.length)return '<div class="quo-customer-none">No existing customer match</div>';
+    const qPhone=normPhone(query);
+    return rows.map((row,i)=>{
+      const exact=mode==='phone'&&qPhone&&normPhone(row.phone)===qPhone;
+      return `<button type="button" class="quo-customer-smart-result" data-customer-index="${i}">
+        <span class="quo-customer-smart-main"><b>${esc(row.name)}</b><small>${row.phone?esc(row.phone):'No mobile'}${row.count>1?` · ${row.count} documents`:''}</small></span>
+        <span class="quo-customer-smart-side">${exact?'<strong>Exact mobile</strong>':''}${row.address?`<em>${esc(row.address)}</em>`:''}</span>
+      </button>`;
+    }).join('');
   }
 
-  let visibleRows=[];
-  function renderResults(query,open=true){
-    const box=document.querySelector('[data-customer-results]');if(!box)return;
-    const q=clean(query);
-    visibleRows=customerRows().filter(row=>customerMatches(row,q)).slice(0,6);
-    if(!open||!q){box.hidden=true;box.innerHTML='';return;}
-    box.innerHTML=resultHTML(visibleRows);box.hidden=false;
-    box.querySelectorAll('[data-customer-pick]').forEach(btn=>btn.onclick=e=>{
-      e.preventDefault();e.stopPropagation();
-      useCustomer(visibleRows[Number(btn.dataset.customerPick)]);
+  let activeRows=[], activeIndex=-1, activeInput=null;
+  function openResults(input,mode,showRecent=false){
+    const field=input.closest('.field');
+    const box=field?.querySelector('.quo-customer-smart-results');if(!box)return;
+    const query=clean(input.value);
+    if(!query&&!showRecent){box.hidden=true;field.classList.remove('quo-customer-open');return;}
+    activeRows=matches(query,mode);activeIndex=-1;activeInput=input;
+    box.innerHTML=`${!query?'<div class="quo-customer-recent-label">Recent customers</div>':''}${resultHTML(activeRows,query,mode)}`;
+    box.hidden=false;field.classList.add('quo-customer-open');
+    box.querySelectorAll('[data-customer-index]').forEach(btn=>btn.onclick=e=>{
+      e.preventDefault();e.stopPropagation();useCustomer(activeRows[Number(btn.dataset.customerIndex)]);
     });
   }
 
-  function refreshExactPhoneHint(){
-    const phone=document.querySelector('[data-field="customer_phone"]');
-    const hint=document.querySelector('[data-customer-phone-match]');
-    if(!phone||!hint)return;
-    const row=exactPhoneCustomer(phone.value);
-    const same=row&&normName(row.name)===normName(document.querySelector('[data-field="customer_name"]')?.value);
-    if(!row||same){hint.hidden=true;hint.innerHTML='';return;}
-    hint.hidden=false;
-    hint.innerHTML=`Existing customer found: <b>${esc(row.name)}</b> <button type="button" data-use-phone-match>Use details</button>`;
-    hint.querySelector('[data-use-phone-match]').onclick=e=>{e.preventDefault();useCustomer(row)};
+  function moveActive(delta){
+    if(!activeInput)return;
+    const field=activeInput.closest('.field'), buttons=[...(field?.querySelectorAll('[data-customer-index]')||[])];
+    if(!buttons.length)return;
+    activeIndex=(activeIndex+delta+buttons.length)%buttons.length;
+    buttons.forEach((b,i)=>b.classList.toggle('active',i===activeIndex));
+    buttons[activeIndex].scrollIntoView({block:'nearest'});
+  }
+
+  function keyboard(e){
+    const field=e.target.closest('.field'), box=field?.querySelector('.quo-customer-smart-results');
+    if(!box||box.hidden)return;
+    if(e.key==='ArrowDown'){e.preventDefault();moveActive(1)}
+    else if(e.key==='ArrowUp'){e.preventDefault();moveActive(-1)}
+    else if(e.key==='Enter'){
+      if(activeRows.length){e.preventDefault();useCustomer(activeRows[activeIndex>=0?activeIndex:0])}
+    }else if(e.key==='Escape'){e.preventDefault();closeAll()}
+  }
+
+  function exactPhone(value){
+    const p=normPhone(value);if(!p)return null;
+    return customerRows().find(row=>normPhone(row.phone)===p)||null;
+  }
+
+  function clearMatchHint(){
+    document.querySelectorAll('.quo-customer-match-hint').forEach(el=>el.remove());
+  }
+
+  function phoneMatchHint(phoneInput){
+    clearMatchHint();
+    const p=normPhone(phoneInput.value);if(p.length<7)return;
+    const row=exactPhone(phoneInput.value);if(!row)return;
+    const currentName=normName(document.querySelector('[data-field="customer_name"]')?.value);
+    if(currentName===normName(row.name))return;
+    const hint=document.createElement('button');
+    hint.type='button';hint.className='quo-customer-match-hint';
+    hint.innerHTML=`<span>Existing customer</span><b>${esc(row.name)}</b><em>Use details</em>`;
+    hint.onclick=e=>{e.preventDefault();e.stopPropagation();useCustomer(row)};
+    phoneInput.closest('.field')?.appendChild(hint);
+  }
+
+  function ensureResults(field){
+    let box=field.querySelector('.quo-customer-smart-results');
+    if(!box){box=document.createElement('div');box.className='quo-customer-smart-results';box.hidden=true;field.appendChild(box)}
+    field.classList.add('quo-customer-smart-field');
+    return box;
   }
 
   function install(){
     if(typeof S==='undefined'||S.view!=='editor'||!S.current)return;
+    document.querySelectorAll('.quo-customer-picker').forEach(el=>el.remove());
     const name=document.querySelector('[data-field="customer_name"]');
     const phone=document.querySelector('[data-field="customer_phone"]');
     if(!name||!phone)return;
-    const card=name.closest('.editor-card');
-    const body=card?.querySelector('.card-body');
-    if(!body)return;
 
-    let picker=body.querySelector('.quo-customer-picker');
-    if(!picker){
-      picker=document.createElement('div');picker.className='quo-customer-picker';
-      picker.innerHTML=`<label>Existing Customer</label><div class="quo-customer-search-wrap"><input type="search" autocomplete="off" data-customer-search placeholder="Search by customer name or mobile"><span class="quo-customer-search-icon">⌕</span><div class="quo-customer-results" data-customer-results hidden></div></div><div class="quo-customer-phone-match" data-customer-phone-match hidden></div>`;
-      body.prepend(picker);
-    }
+    ensureResults(name.closest('.field'));ensureResults(phone.closest('.field'));
+    name.autocomplete='off';phone.autocomplete='off';phone.inputMode='tel';
 
-    const search=picker.querySelector('[data-customer-search]');
-    search.oninput=()=>renderResults(search.value,true);
-    search.onfocus=()=>{if(clean(search.value))renderResults(search.value,true)};
-    search.onkeydown=e=>{if(e.key==='Escape')renderResults('',false)};
-    phone.addEventListener('input',refreshExactPhoneHint);
-    phone.addEventListener('change',refreshExactPhoneHint);
-    name.addEventListener('input',refreshExactPhoneHint);
-    refreshExactPhoneHint();
+    name.onfocus=()=>openResults(name,'name',true);
+    name.oninput=()=>{setDirty();openResults(name,'name',false);clearMatchHint()};
+    name.onkeydown=keyboard;
+
+    phone.onfocus=()=>openResults(phone,'phone',true);
+    phone.oninput=()=>{setDirty();openResults(phone,'phone',false);phoneMatchHint(phone)};
+    phone.onchange=()=>phoneMatchHint(phone);
+    phone.onkeydown=keyboard;
+    phoneMatchHint(phone);
   }
 
   document.addEventListener('click',e=>{
-    const picker=document.querySelector('.quo-customer-picker');
-    if(picker&&!picker.contains(e.target))renderResults('',false);
-  });
+    if(!e.target.closest('.quo-customer-smart-field,.quo-customer-match-hint'))closeAll();
+  },true);
 
   try{
     const previousBind=bindDynamic;
     bindDynamic=function(){const result=previousBind.apply(this,arguments);install();return result};
   }catch(e){}
 
-  if(!document.getElementById('quoCustomerPickerV62Style')){
-    const st=document.createElement('style');st.id='quoCustomerPickerV62Style';st.textContent=`
-      .quo-customer-picker{margin:0 0 12px;padding:10px 11px;border:1px solid #dfe7e4;border-radius:9px;background:#f8faf9;position:relative;z-index:20}
-      .quo-customer-picker>label{display:block;margin-bottom:6px;font-size:8px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:#66746f}
-      .quo-customer-search-wrap{position:relative}.quo-customer-search-wrap>input{width:100%;min-height:38px;padding:8px 34px 8px 10px;border:1px solid #cfd9d5;border-radius:7px;background:#fff;font:inherit;color:#26332f;box-sizing:border-box}.quo-customer-search-wrap>input:focus{outline:2px solid #b8d4cc;outline-offset:1px;border-color:#7da79c}.quo-customer-search-icon{position:absolute;right:11px;top:9px;color:#73817c;pointer-events:none}
-      .quo-customer-results{position:absolute;left:0;right:0;top:43px;z-index:1200;padding:5px;border:1px solid #d6dfdc;border-radius:8px;background:#fff;box-shadow:0 14px 34px rgba(26,43,38,.14);max-height:276px;overflow:auto}.quo-customer-result{display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px;padding:9px 10px;border:0;border-bottom:1px solid #edf0ef;background:#fff;text-align:left;cursor:pointer}.quo-customer-result:last-child{border-bottom:0}.quo-customer-result:hover,.quo-customer-result:focus-visible{background:#f3f8f6;outline:none}.quo-customer-result span{min-width:0}.quo-customer-result b{display:block;font-size:10px;color:#25332f}.quo-customer-result small{display:block;margin-top:2px;font-size:8px;color:#61706b}.quo-customer-result em{max-width:48%;font-style:normal;font-size:8px;line-height:1.3;text-align:right;color:#7a8581}.quo-customer-empty{padding:10px;font-size:9px;color:#7b8582}
-      .quo-customer-phone-match{margin-top:7px;padding:7px 8px;border-radius:6px;background:#eef6f3;color:#49645c;font-size:8.5px}.quo-customer-phone-match button{margin-left:5px;padding:2px 5px;border:0;background:transparent;color:#2e6d60;font-weight:850;cursor:pointer;text-decoration:underline}
-      @media(max-width:620px){.quo-customer-picker{margin-bottom:10px}.quo-customer-result{align-items:flex-start;flex-direction:column;gap:4px;padding:10px}.quo-customer-result em{max-width:none;text-align:left}.quo-customer-results{max-height:230px}}
+  if(!document.getElementById('quoCustomerPickerV63Style')){
+    const st=document.createElement('style');st.id='quoCustomerPickerV63Style';st.textContent=`
+      .quo-customer-smart-field{position:relative}.quo-customer-smart-field.quo-customer-open{z-index:120}
+      .quo-customer-smart-results{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:1400;padding:5px;border:1px solid #d4dedb;border-radius:9px;background:#fff;box-shadow:0 16px 38px rgba(25,42,37,.16);max-height:286px;overflow:auto}
+      .quo-customer-recent-label{padding:6px 9px 5px;font-size:8px;font-weight:850;letter-spacing:.07em;text-transform:uppercase;color:#7a8782}
+      .quo-customer-smart-result{width:100%;min-height:48px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 10px;border:0;border-bottom:1px solid #edf1ef;border-radius:6px;background:#fff;text-align:left;cursor:pointer}.quo-customer-smart-result:last-child{border-bottom:0}.quo-customer-smart-result:hover,.quo-customer-smart-result:focus-visible,.quo-customer-smart-result.active{background:#f2f8f5;outline:none}
+      .quo-customer-smart-main{min-width:0}.quo-customer-smart-main b{display:block;font-size:10.5px;color:#24312d}.quo-customer-smart-main small{display:block;margin-top:3px;font-size:8.5px;color:#697670}.quo-customer-smart-side{max-width:48%;display:flex;flex-direction:column;align-items:flex-end;gap:3px}.quo-customer-smart-side strong{font-size:7.5px;padding:2px 5px;border-radius:999px;background:#e8f4ef;color:#2e6759}.quo-customer-smart-side em{font-style:normal;font-size:8px;line-height:1.3;text-align:right;color:#7b8782}
+      .quo-customer-none{padding:10px;font-size:9px;color:#7a8581}
+      .quo-customer-match-hint{width:100%;margin-top:6px;min-height:38px;display:flex;align-items:center;gap:7px;padding:7px 9px;border:1px solid #cfe1da;border-radius:7px;background:#f1f8f5;color:#48655c;text-align:left;cursor:pointer}.quo-customer-match-hint:hover{background:#e9f5f0}.quo-customer-match-hint span{font-size:8px;color:#74817c}.quo-customer-match-hint b{font-size:9px;color:#29483f}.quo-customer-match-hint em{margin-left:auto;font-style:normal;font-size:8px;font-weight:850;color:#2e6d60}
+      @media(max-width:620px){.quo-customer-smart-results{position:fixed;left:12px;right:12px;top:auto;bottom:12px;max-height:52vh;border-radius:13px;padding:7px;box-shadow:0 18px 50px rgba(18,32,28,.24)}.quo-customer-smart-result{min-height:56px;align-items:flex-start;flex-direction:column;gap:4px;padding:10px 11px}.quo-customer-smart-side{max-width:none;align-items:flex-start}.quo-customer-smart-side em{text-align:left}.quo-customer-smart-side strong{order:2}.quo-customer-match-hint{min-height:44px}}
     `;document.head.appendChild(st);
   }
 })();
