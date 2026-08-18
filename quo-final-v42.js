@@ -1,6 +1,6 @@
-/* Quo v55 - quotation workflow status can be changed safely from the editor. */
+/* Quo v57 - safe quotation workflow status editing. */
 (function(){
-  const ACTOR='White Saffron';
+  const actor=()=>String(S?.displayName||'White Saffron').trim()||'White Saffron';
 
   function linkedActiveProforma(quote){
     const key=quote.deal_id||quote.id;
@@ -21,7 +21,7 @@
       if(d.status==='Confirmed')return true;
       if(!confirm(`Confirm ${d.document_number} and create its Proforma Invoice?`))return false;
       try{
-        const r=await sb.rpc('quo_convert_document',{p_source_id:d.id,p_target_type:'proforma',p_actor:ACTOR});
+        const r=await sb.rpc('quo_convert_document',{p_source_id:d.id,p_target_type:'proforma',p_actor:actor()});
         if(r.error)throw r.error;
         await refreshDocs();
         syncCurrent(id);
@@ -45,7 +45,7 @@
     if(status==='Lost'&&!confirm(`Mark ${d.document_number} as lost?`))return false;
 
     try{
-      const r=await sb.from('quo_documents').update({status,updated_by:null,updated_by_name:ACTOR}).eq('id',id).select('*').single();
+      const r=await sb.from('quo_documents').update({status,updated_by:null,updated_by_name:actor()}).eq('id',id).select('*').single();
       if(r.error)throw r.error;
       await refreshDocs();
       syncCurrent(id);
@@ -79,6 +79,17 @@
         const current=(S.docs||[]).find(x=>x.id===d.id)?.status||d.status;
         if(next===current)return;
         e.target.disabled=true;
+
+        /* A workflow action must never discard unsaved customer/items/menu edits. */
+        if(S.editorDirty){
+          e.target.value=current;
+          const saved=await saveCurrent(false);
+          if(!saved){
+            if(document.body.contains(e.target)){e.target.disabled=false;e.target.value=current;}
+            return;
+          }
+        }
+
         const ok=await updateQuoteStage(d.id,next);
         if(!ok&&document.body.contains(e.target)){e.target.disabled=false;e.target.value=current;}
       };
@@ -95,8 +106,8 @@
     $$('[data-quote-stage]').forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();updateQuoteStage(b.dataset.quoteId,b.dataset.quoteStage)});
   };
 
-  if(!document.getElementById('quoFinalV55Style')){
-    const st=document.createElement('style');st.id='quoFinalV55Style';st.textContent=`
+  if(!document.getElementById('quoFinalV57Style')){
+    const st=document.createElement('style');st.id='quoFinalV57Style';st.textContent=`
       .wf-queues>.wf-panel:first-child{display:none!important}
       .quo-final-pipeline{margin-bottom:12px!important;scroll-margin-top:92px}
       .quo-status-manage,.quo-status-note{display:none!important}
