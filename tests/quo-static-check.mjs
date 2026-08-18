@@ -23,6 +23,7 @@ if(!index.includes('quo-final-audit-v65.js?v=65'))fail('v65 final audit module i
 if(!index.includes('quo-amendments-v66.js?v=66'))fail('v66 amendment module is not loaded');else ok('v66 amendment module is loaded');
 if(!index.includes('quo-dashboard-graph-v67.js?v=67'))fail('v67 dashboard graph module is not loaded');else ok('v67 dashboard graph is loaded');
 if(!index.includes('quo-finance-v68.js?v=68'))fail('v68 finance controls module is not loaded');else ok('v68 finance controls are loaded');
+if(!index.includes('quo-finance-nav-v69.js?v=69'))fail('v69 finance navigation module is not loaded');else ok('v69 finance navigation is loaded');
 if(index.includes('quo-customer-picker.js'))fail('Superseded customer picker is still loaded');else ok('Old customer picker is removed from runtime');
 
 const preview=read('quo-preview-v44.js');
@@ -69,6 +70,13 @@ for(const token of ["QUO_FINANCE_VERSION='68'",'quo_create_adjustment_note','Inv
 }
 if(finance.includes('MutationObserver'))fail('Finance v68 must not add a MutationObserver');
 if(!process.exitCode)ok('Credit/debit notes, aging and activity timeline UI are present');
+
+const financeNav=read('quo-finance-nav-v69.js');
+for(const token of ["QUO_FINANCE_NAV_VERSION='69'",'credit_note','debit_note','openType(type)','data-q69-filter']){
+  if(!financeNav.includes(token))fail(`Finance v69 navigation marker missing: ${token}`);
+}
+if(financeNav.includes('MutationObserver'))fail('Finance v69 navigation must not add a MutationObserver');
+if(!process.exitCode)ok('Credit/debit navigation and filter chips are wired');
 
 const financeMigration=read('supabase/migrations/20260819_quo_financial_controls_aging_timeline_v68.sql');
 for(const token of ['credit_note','debit_note','quo_invoice_effective_total','quo_create_adjustment_note','quo_document_events','quo_log_document_event','adjustment_notes_without_invoice']){
