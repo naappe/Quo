@@ -1,7 +1,6 @@
-/* Quo v56 - canonical editor master.
-   Keeps optional Notes & Terms hidden until the document needs them and owns editor navigation. */
+/* Quo v58 - canonical editor master and navigation guard. */
 (function(){
-  const VERSION='56';
+  const VERSION='58';
   const PREPARER='White Saffron';
   const ORDER=['document','customer','items','event / service','menu','notes & terms'];
 
@@ -28,6 +27,11 @@
   }catch(e){}
 
   function titleOf(card){return String(card?.querySelector('header h3')?.textContent||'').trim().toLowerCase()}
+  function dealKey(d){return d?.deal_id||d?.id||null}
+  function linkedDoc(d,type){
+    const key=dealKey(d);
+    return (S.docs||[]).find(x=>x.document_type===type&&!x.deleted_at&&x.status!=='Cancelled'&&(x.source_document_id===d.id||(key&&x.deal_id===key)));
+  }
 
   function suggestedTerms(type){
     if(type==='quotation'){
@@ -69,20 +73,54 @@
     if(header){
       const b=document.createElement('button');
       b.type='button';b.className='quo-terms-action';
-      if(hasTerms){b.dataset.quoTermsRemove='';b.textContent='Remove from PDF'}
+      if(hasTerms){b.dataset.quoTermsRemove='';b.textContent='Remove'}
       else{b.dataset.quoTermsAdd='';b.textContent='Add Terms'}
       header.appendChild(b);
     }
     if(body){
       body.hidden=!hasTerms;
       const ta=body.querySelector('[data-field="extra_terms"]');
-      if(ta)ta.placeholder='Add only terms that are relevant to this document.';
+      if(ta)ta.placeholder='Notes or terms';
     }
-    if(!hasTerms){
-      const note=document.createElement('p');
-      note.className='quo-terms-empty-note';
-      note.textContent='Optional - hidden from the customer PDF until you add it.';
-      card.appendChild(note);
+  }
+
+  function configureWorkflowActions(host){
+    const actions=host.querySelector('.editor-actions');
+    if(!actions)return;
+    actions.querySelectorAll('[data-create-receipt]').forEach(el=>el.remove());
+
+    const more=actions.querySelector('.editor-more');
+    const menu=more?.querySelector('.editor-more-menu');
+    const d=S.current;
+
+    if(d.document_type==='receipt')menu?.querySelector('[data-duplicate]')?.remove();
+
+    if(d.document_type==='quotation'){
+      menu?.querySelector('[data-convert="invoice"]')?.remove();
+      const piButton=menu?.querySelector('[data-convert="proforma"]');
+      if(piButton&&linkedDoc(d,'proforma'))piButton.textContent='Open Proforma Invoice';
+    }
+    if(d.document_type==='proforma'){
+      const invButton=menu?.querySelector('[data-convert="invoice"]');
+      if(invButton&&linkedDoc(d,'invoice'))invButton.textContent='Open Invoice';
+    }
+
+    let preview=actions.querySelector('[data-full-preview]');
+    if(!preview){
+      preview=document.createElement('button');preview.type='button';preview.className='btn';preview.dataset.fullPreview='';preview.textContent='Preview PDF';
+      actions.querySelector('[data-save]')?.insertAdjacentElement('afterend',preview);
+    }else preview.textContent='Preview PDF';
+
+    const pdfButtons=[...actions.querySelectorAll('[data-pdf]')];
+    let pdf=pdfButtons.find(el=>!menu?.contains(el))||pdfButtons[0];
+    pdfButtons.filter(el=>el!==pdf).forEach(el=>el.remove());
+    if(pdf&&menu&&!menu.contains(pdf))menu.prepend(pdf);
+    if(pdf){pdf.textContent='Download PDF';pdf.classList.add('btn')}
+
+    if(d.id&&menu&&!menu.querySelector('[data-delete-doc]')){
+      const del=document.createElement('button');
+      del.type='button';del.className='btn danger';del.dataset.deleteDoc=d.id;del.textContent='Delete';
+      menu.appendChild(del);
     }
   }
 
@@ -94,10 +132,7 @@
 
     const back=host.querySelector('[data-back]');
     if(back){
-      back.type='button';
-      back.textContent='← Back';
-      back.setAttribute('aria-label','Back to documents');
-      back.setAttribute('title','Back to documents');
+      back.type='button';back.textContent='← Back';back.setAttribute('aria-label','Back to documents');back.setAttribute('title','Back to documents');
     }
 
     const main=host.querySelector('.editor-main');
@@ -116,30 +151,7 @@
     }
 
     configureTermsCard(host);
-
-    const actions=host.querySelector('.editor-actions');
-    if(actions){
-      actions.querySelectorAll('[data-create-receipt]').forEach(el=>el.remove());
-      const more=actions.querySelector('.editor-more');
-      const menu=more?.querySelector('.editor-more-menu');
-      let preview=actions.querySelector('[data-full-preview]');
-      if(!preview){
-        preview=document.createElement('button');preview.type='button';preview.className='btn';preview.dataset.fullPreview='';preview.textContent='Preview PDF';
-        actions.querySelector('[data-save]')?.insertAdjacentElement('afterend',preview);
-      }else preview.textContent='Preview PDF';
-
-      const pdfButtons=[...actions.querySelectorAll('[data-pdf]')];
-      let pdf=pdfButtons.find(el=>!menu?.contains(el))||pdfButtons[0];
-      pdfButtons.filter(el=>el!==pdf).forEach(el=>el.remove());
-      if(pdf&&menu&&!menu.contains(pdf))menu.prepend(pdf);
-      if(pdf){pdf.textContent='Download PDF';pdf.classList.add('btn')}
-
-      if(S.current.id&&menu&&!menu.querySelector('[data-delete-doc]')){
-        const del=document.createElement('button');
-        del.type='button';del.className='btn danger';del.dataset.deleteDoc=S.current.id;del.textContent='Delete';
-        menu.appendChild(del);
-      }
-    }
+    configureWorkflowActions(host);
 
     if(!S.current.id&&/AUTO ON SAVE/i.test(String(S.current.document_number||''))){
       host.querySelectorAll('.doc-number-pill,.mini-doc span').forEach(el=>el.textContent='Auto number on save');
@@ -152,6 +164,24 @@
     renderEditor=function(){return masterEditorHTML(previousRenderEditor.apply(this,arguments))};
   }catch(e){}
 
+  /* A duplicate is a new independent commercial record, never part of the old deal. */
+  try{
+    duplicateCurrent=function(){
+      if(!S.current)return;
+      if(S.current.document_type==='receipt')return alert('Receipts are created only from recorded Invoice payments.');
+      readEditor?.();
+      const copy=blankDoc(S.current.document_type,S.current);
+      copy.source_document_id=null;
+      copy.deal_id=null;
+      copy.status='Draft';
+      copy.paid_amount=0;
+      copy.payment_reference='';
+      copy.payment_status=copy.document_type==='invoice'?'Unpaid':'Not Applicable';
+      S.editorDirty=false;
+      openEditor(copy);
+    };
+  }catch(e){}
+
   function cleanChrome(){
     document.querySelector('.prepared-by')?.remove();
     document.querySelectorAll('.quote-stage-bar,.fill-guide,.section-warning,.runtime-number-hint').forEach(el=>el.remove());
@@ -161,8 +191,7 @@
     const back=document.querySelector('[data-back]');
     if(!back)return;
     back.onclick=function(e){
-      e.preventDefault();
-      e.stopPropagation();
+      e.preventDefault();e.stopPropagation();
       if(typeof goDocuments==='function')goDocuments(S.current?.document_type||'all');
     };
   }
@@ -178,8 +207,21 @@
     };
   }catch(e){}
 
-  if(!document.getElementById('quoMasterV56Style')){
-    const st=document.createElement('style');st.id='quoMasterV56Style';st.textContent=`
+  function leavingEditorTarget(target){
+    return target?.closest?.('[data-back],[data-view],[data-go-docs],[data-workflow-open],[data-open],[data-create]');
+  }
+  document.addEventListener('click',e=>{
+    if(S?.view!=='editor'||!S?.editorDirty)return;
+    const nav=leavingEditorTarget(e.target);if(!nav)return;
+    if(confirm('You have unsaved changes. Leave without saving?'))return;
+    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+  },true);
+  window.addEventListener('beforeunload',e=>{
+    if(S?.view==='editor'&&S?.editorDirty){e.preventDefault();e.returnValue='';}
+  });
+
+  if(!document.getElementById('quoMasterV58Style')){
+    const st=document.createElement('style');st.id='quoMasterV58Style';st.textContent=`
       .editor-top .back-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:34px!important;margin-top:1px!important;padding:7px 10px!important;border:1px solid #dce3e0!important;border-radius:8px!important;background:#fff!important;color:#40504b!important;font-size:10px!important;font-weight:750!important;cursor:pointer!important;pointer-events:auto!important;position:relative!important;z-index:40!important}
       .editor-top .back-btn:hover{background:#f4f7f6!important;border-color:#bccbc6!important;color:#1f342e!important}
       .editor-top .back-btn:focus-visible{outline:2px solid #7fa79f!important;outline-offset:2px!important}
@@ -190,7 +232,7 @@
       .editor-more[open] .editor-more-menu .btn.danger{color:#9c4545!important}
       .editor-more[open] .editor-more-menu .btn.danger:hover{background:#fff3f2!important}
       .quote-stage-bar,.prepared-by,.fill-guide,.section-warning,.runtime-number-hint,.section-toggle,[data-section-toggle],.section-no{display:none!important}
-      .quo-terms-card header{align-items:center!important}.quo-terms-action{margin-left:auto;border:0;background:transparent;color:#2d6d64;font-size:9px;font-weight:850;cursor:pointer;padding:5px 7px;border-radius:6px}.quo-terms-action:hover{background:#edf6f3}.quo-terms-empty{min-height:0!important}.quo-terms-empty .card-body{display:none!important}.quo-terms-empty-note{margin:-2px 16px 13px;color:#89918e;font-size:9.5px;line-height:1.4}
+      .quo-terms-card header{align-items:center!important}.quo-terms-action{margin-left:auto;border:0;background:transparent;color:#2d6d64;font-size:9px;font-weight:850;cursor:pointer;padding:5px 7px;border-radius:6px}.quo-terms-action:hover{background:#edf6f3}.quo-terms-empty{min-height:0!important}.quo-terms-empty .card-body{display:none!important}
       @media(max-width:820px){.editor-more[open] .editor-more-menu{left:0!important;right:auto!important;width:min(240px,calc(100vw - 32px))!important;min-width:0!important}}
     `;document.head.appendChild(st);
   }
