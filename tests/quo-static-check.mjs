@@ -19,6 +19,7 @@ if(!process.exitCode)ok(`${localScripts.length} referenced JavaScript files pars
 
 if(!index.includes('quo-pdf-pagination-v64.js?v=64'))fail('v64 PDF pagination module is not loaded');else ok('v64 PDF pagination is loaded');
 if(!index.includes('quo-production-v64.js?v=64'))fail('v64 production module is not loaded');else ok('v64 production module is loaded');
+if(!index.includes('quo-final-audit-v65.js?v=65'))fail('v65 final audit module is not loaded');else ok('v65 final audit module is loaded');
 if(index.includes('quo-customer-picker.js'))fail('Superseded customer picker is still loaded');else ok('Old customer picker is removed from runtime');
 
 const preview=read('quo-preview-v44.js');
@@ -33,6 +34,11 @@ for(const token of ['quo_customers','quo_system_health','select(\'*\',{count:\'e
   if(!production.includes(token))fail(`Production capability marker missing: ${token}`);
 }
 if(!process.exitCode)ok('Customer master, health checks and server-side document paging markers are present');
+
+const finalAudit=read('quo-final-audit-v65.js');
+if(!finalAudit.includes("QUO_FINAL_AUDIT_VERSION='65'"))fail('Final audit version marker missing');
+if(!finalAudit.includes("if(label.textContent!==wanted)label.textContent=wanted"))fail('Preview relabel mutation guard missing');
+if(!process.exitCode)ok('Final audit preview label guard is present');
 
 if(process.exitCode)process.exit(process.exitCode);
 console.log('Quo static production checks passed.');
