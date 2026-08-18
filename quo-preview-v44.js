@@ -1,4 +1,4 @@
-/* Quo v46 - single preview authority with stall protection and render deduping. */
+/* Quo v47 - single preview authority with stall protection and mutation-loop guard. */
 (function(){
   let previewTimer=null;
   let previewBusy=false;
@@ -106,9 +106,16 @@
   }
   function showFullPage(i){
     const list=fullPages();if(!list.length)return;
-    fullPageIndex=Math.max(0,Math.min(i,list.length-1));list.forEach((p,n)=>p.classList.toggle('quo-page-current',n===fullPageIndex));
-    const label=document.getElementById('quoPreviewPageCount');if(label)label.textContent=`Page ${fullPageIndex+1} of ${list.length}`;
-    const prev=document.getElementById('quoPreviewPrev'),next=document.getElementById('quoPreviewNext');if(prev)prev.disabled=fullPageIndex===0;if(next)next.disabled=fullPageIndex===list.length-1;
+    fullPageIndex=Math.max(0,Math.min(i,list.length-1));
+    list.forEach((p,n)=>{
+      const active=n===fullPageIndex;
+      if(p.classList.contains('quo-page-current')!==active)p.classList.toggle('quo-page-current',active);
+    });
+    const text=`Page ${fullPageIndex+1} of ${list.length}`;
+    const label=document.getElementById('quoPreviewPageCount');if(label&&label.textContent!==text)label.textContent=text;
+    const prev=document.getElementById('quoPreviewPrev'),next=document.getElementById('quoPreviewNext');
+    if(prev&&prev.disabled!==(fullPageIndex===0))prev.disabled=fullPageIndex===0;
+    if(next&&next.disabled!==(fullPageIndex===list.length-1))next.disabled=fullPageIndex===list.length-1;
   }
   function enhanceFullPreview(){
     const m=fullModal();if(!m||m.dataset.v44Preview==='1')return;
@@ -123,25 +130,35 @@
   document.addEventListener('keydown',e=>{const m=fullModal();if(!m||m.classList.contains('hidden'))return;if(e.key==='Escape'){e.preventDefault();hardClosePreview()}if(e.key==='ArrowLeft'){e.preventDefault();showFullPage(fullPageIndex-1)}if(e.key==='ArrowRight'){e.preventDefault();showFullPage(fullPageIndex+1)}},true);
   window.addEventListener('resize',()=>attachPreviewShells(document));
 
+  /* Observe editor replacement only. Never drive full-preview page state from DOM mutations:
+     updating the page counter itself creates childList mutations and previously caused an endless loop. */
   const mutationObserver=new MutationObserver(mutations=>{
     let editorAdded=false;
-    for(const m of mutations){for(const node of m.addedNodes){
-      if(node.nodeType!==1)continue;
-      if(node.matches?.('.preview-card')||node.querySelector?.('.preview-card'))editorAdded=true;
-      if(node.matches?.('.preview-scale-shell')||node.querySelector?.('.preview-scale-shell'))attachPreviewShells(node.matches?.('.preview-scale-shell')?(node.parentElement||document):node);
-    }}
+    for(const m of mutations){
+      if(m.target?.nodeType===1&&m.target.closest?.('#printRoot'))continue;
+      for(const node of m.addedNodes){
+        if(node.nodeType!==1)continue;
+        if(node.matches?.('.preview-card')||node.querySelector?.('.preview-card'))editorAdded=true;
+        if(node.matches?.('.preview-scale-shell')||node.querySelector?.('.preview-scale-shell'))attachPreviewShells(node.matches?.('.preview-scale-shell')?(node.parentElement||document):node);
+      }
+    }
     if(editorAdded){lastPreviewKey='';schedulePreview(60,true)}
     enhanceFullPreview();
-    const modal=fullModal();if(modal&&!modal.classList.contains('hidden')&&fullPages().length)showFullPage(fullPageIndex);
   });
   mutationObserver.observe(document.documentElement,{childList:true,subtree:true});
 
   try{const previousOpen=openEditor;openEditor=function(){lastPreviewKey='';const result=previousOpen.apply(this,arguments);schedulePreview(70,true);return result}}catch(e){}
-  try{const previousFull=openFullPreview;openFullPreview=function(){const result=previousFull.apply(this,arguments);setTimeout(()=>{enhanceFullPreview();showFullPage(0)},0);return result}}catch(e){}
+  try{const previousFull=openFullPreview;openFullPreview=function(){
+    clearTimeout(previewTimer);
+    const result=previousFull.apply(this,arguments);
+    requestAnimationFrame(()=>{enhanceFullPreview();showFullPage(0)});
+    return result;
+  }}catch(e){}
 
-  if(!document.getElementById('quoPreviewV46Style')){
+  if(!document.getElementById('quoPreviewV47Style')){
     document.getElementById('quoPreviewV44Style')?.remove();
-    const st=document.createElement('style');st.id='quoPreviewV46Style';st.textContent=`
+    document.getElementById('quoPreviewV46Style')?.remove();
+    const st=document.createElement('style');st.id='quoPreviewV47Style';st.textContent=`
       .preview-card{max-height:calc(100vh - 104px);overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:thin}.preview-toolbar{position:sticky;top:-12px;z-index:4;background:#e9edeb;padding:3px 0 8px;margin-bottom:0}.preview-pages{display:flex;flex-direction:column;gap:16px;padding-top:8px;width:100%;min-width:0}.preview-page-wrap{display:block;width:100%;min-width:0}.preview-page-label{display:flex;align-items:center;gap:7px;margin:0 2px 6px;color:#65706d;font-size:8px;text-transform:uppercase;letter-spacing:.08em}.preview-page-label span{font-weight:900;color:var(--brand-dark)}.preview-page-label b{font-size:8px}.preview-scale-shell{width:100%!important;max-width:100%!important;margin:0!important;height:auto;overflow:hidden!important;background:#fff;box-shadow:0 8px 25px rgba(25,43,40,.10)}.preview-scale{width:210mm;height:297mm;transform-origin:top left!important}.preview-scale .pdf-page{box-shadow:none;margin:0;page-break-after:auto}
       .quo-full-preview{z-index:2147483600!important}.quo-full-preview-head{position:sticky;top:0;z-index:5}.quo-full-preview-scroll{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.quo-preview-bottom-nav{position:sticky;bottom:0;z-index:6;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:rgba(255,255,255,.98);border-top:1px solid #dfe3e5;box-shadow:0 -8px 24px rgba(20,24,27,.08);backdrop-filter:blur(12px)}.quo-preview-page-nav{display:flex;align-items:center;gap:8px}.quo-preview-page-nav b{min-width:92px;text-align:center;font-size:10px;color:#687074}.quo-preview-bottom-nav .btn{min-height:40px}
       @media(max-width:1180px){.preview-card{max-height:none;overflow:visible!important;width:100%!important;max-width:620px!important}}
