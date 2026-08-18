@@ -21,6 +21,7 @@ if(!index.includes('quo-pdf-pagination-v64.js?v=64'))fail('v64 PDF pagination mo
 if(!index.includes('quo-production-v64.js?v=64'))fail('v64 production module is not loaded');else ok('v64 production module is loaded');
 if(!index.includes('quo-final-audit-v65.js?v=65'))fail('v65 final audit module is not loaded');else ok('v65 final audit module is loaded');
 if(!index.includes('quo-amendments-v66.js?v=66'))fail('v66 amendment module is not loaded');else ok('v66 amendment module is loaded');
+if(!index.includes('quo-dashboard-graph-v67.js?v=67'))fail('v67 dashboard graph module is not loaded');else ok('v67 dashboard graph is loaded');
 if(index.includes('quo-customer-picker.js'))fail('Superseded customer picker is still loaded');else ok('Old customer picker is removed from runtime');
 
 const preview=read('quo-preview-v44.js');
@@ -53,6 +54,13 @@ for(const token of ['revision_root_id','superseded_by_id','quo_guard_issued_cont
   if(!migration.includes(token))fail(`Database amendment marker missing: ${token}`);
 }
 if(!process.exitCode)ok('Database revision and issued-document immutability migration is present');
+
+const graph=read('quo-dashboard-graph-v67.js');
+for(const token of ["QUO_DASHBOARD_GRAPH_VERSION='67'",'Commercial Activity','quoted:0','invoiced:0','collected:0',"new Set(['Cancelled','Superseded'])"]){
+  if(!graph.includes(token))fail(`Dashboard graph capability marker missing: ${token}`);
+}
+if(graph.includes('MutationObserver'))fail('Dashboard graph must not add a MutationObserver');
+if(!process.exitCode)ok('Six-month dashboard graph and inactive-document exclusions are present');
 
 if(process.exitCode)process.exit(process.exitCode);
 console.log('Quo static production checks passed.');
