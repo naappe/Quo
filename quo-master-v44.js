@@ -1,7 +1,7 @@
-/* Quo v50 - canonical editor master.
-   Keeps optional Notes & Terms hidden until the document needs them. */
+/* Quo v56 - canonical editor master.
+   Keeps optional Notes & Terms hidden until the document needs them and owns editor navigation. */
 (function(){
-  const VERSION='50';
+  const VERSION='56';
   const PREPARER='White Saffron';
   const ORDER=['document','customer','items','event / service','menu','notes & terms'];
 
@@ -92,6 +92,14 @@
 
     host.querySelectorAll('.quote-stage-bar,.fill-guide,.section-warning,.runtime-number-hint').forEach(el=>el.remove());
 
+    const back=host.querySelector('[data-back]');
+    if(back){
+      back.type='button';
+      back.textContent='← Back';
+      back.setAttribute('aria-label','Back to documents');
+      back.setAttribute('title','Back to documents');
+    }
+
     const main=host.querySelector('.editor-main');
     if(main){
       const cards=[...main.children].filter(el=>el.classList?.contains('editor-card'));
@@ -149,18 +157,32 @@
     document.querySelectorAll('.quote-stage-bar,.fill-guide,.section-warning,.runtime-number-hint').forEach(el=>el.remove());
   }
 
+  function bindBackButton(){
+    const back=document.querySelector('[data-back]');
+    if(!back)return;
+    back.onclick=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      if(typeof goDocuments==='function')goDocuments(S.current?.document_type||'all');
+    };
+  }
+
   try{
     const previousBind=bindDynamic;
     bindDynamic=function(){
       cleanChrome();
       const result=previousBind.apply(this,arguments);
+      bindBackButton();
       cleanChrome();
       return result;
     };
   }catch(e){}
 
-  if(!document.getElementById('quoMasterV50Style')){
-    const st=document.createElement('style');st.id='quoMasterV50Style';st.textContent=`
+  if(!document.getElementById('quoMasterV56Style')){
+    const st=document.createElement('style');st.id='quoMasterV56Style';st.textContent=`
+      .editor-top .back-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:34px!important;margin-top:1px!important;padding:7px 10px!important;border:1px solid #dce3e0!important;border-radius:8px!important;background:#fff!important;color:#40504b!important;font-size:10px!important;font-weight:750!important;cursor:pointer!important;pointer-events:auto!important;position:relative!important;z-index:40!important}
+      .editor-top .back-btn:hover{background:#f4f7f6!important;border-color:#bccbc6!important;color:#1f342e!important}
+      .editor-top .back-btn:focus-visible{outline:2px solid #7fa79f!important;outline-offset:2px!important}
       .editor-actions:has(.editor-more[open]){padding-bottom:0!important}
       .editor-more[open] .editor-more-menu{display:block!important;position:absolute!important;top:43px!important;right:0!important;left:auto!important;width:220px!important;min-width:220px!important;padding:6px!important;background:#fff!important;border:1px solid #dce2df!important;border-radius:9px!important;box-shadow:0 14px 36px rgba(25,39,36,.14)!important;z-index:1000!important}
       .editor-more[open] .editor-more-menu .btn{display:block!important;width:100%!important;min-height:34px!important;margin:0!important;padding:8px 10px!important;border:0!important;background:#fff!important;text-align:left!important}
