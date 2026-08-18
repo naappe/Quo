@@ -1,0 +1,65 @@
+/* Quo PDF polish v61 - spacing and hierarchy refinement only. No template redesign. */
+
+/* Header: slightly more breathing room and stronger document reference. */
+.quo-v26 .q26-head{
+  margin-top:3mm!important;
+  padding-bottom:5mm!important;
+}
+.quo-v26 .q26-brand{gap:4.5mm!important}
+.quo-v26 .q26-brand h1{font-size:16pt!important}
+.quo-v26 .q26-brand p{line-height:1.5!important}
+.quo-v26 .q26-doc .no{
+  margin-top:2.4mm!important;
+  font-size:9.3pt!important;
+  color:#2b3633!important;
+  letter-spacing:.015em!important;
+}
+
+/* Customer / document details: easier to scan without making the card heavier. */
+.quo-v26 .q26-info{margin-top:5.5mm!important}
+.quo-v26 .q26-client,
+.quo-v26 .q26-details{padding:4.8mm 5.3mm!important}
+.quo-v26 .q26-client h2{font-size:12pt!important}
+.quo-v26 .q26-details-body{padding-top:1.3mm!important}
+.quo-v26 .q26-info-status{
+  padding:.85mm 2.1mm!important;
+  background:#f3f7f5!important;
+  border:1px solid #dfe8e4!important;
+  color:#4c665f!important;
+  font-size:5.9pt!important;
+}
+
+/* Service strip and line items: keep the existing structure, improve rhythm/readability. */
+.quo-v26 .q26-service{margin-top:4.5mm!important}
+.quo-v26 .q26-service>div{padding:3.2mm 3.3mm!important}
+.quo-v26 .q26-table{margin-top:5.5mm!important}
+.quo-v26 .q26-table td{font-size:7.9pt!important;line-height:1.4!important}
+.quo-v26 .q26-table tbody td:nth-child(2) b{
+  font-size:8.3pt!important;
+  line-height:1.4!important;
+}
+
+/* Totals: retain right alignment with the Amount column and strengthen the grand total. */
+.quo-v26 .q26-summary{width:72mm!important;margin-top:5.5mm!important}
+.quo-v26 .q26-summary .grand td{font-size:11pt!important}
+
+/* Payment block: key payment information should scan before helper labels. */
+.quo-v26 .q26-payment{
+  margin-top:6.5mm!important;
+  padding:4.5mm 5mm!important;
+}
+.quo-v26 .q26-payment-grid{margin-top:3mm!important}
+.quo-v26 .q26-payment-grid strong{font-size:9.8pt!important}
+.quo-v26 .q26-payment-grid small{font-size:6.9pt!important}
+
+/* Closing and footer: more legible while remaining deliberately quiet. */
+.quo-v26 .q26-closing{
+  margin-top:7.5mm!important;
+  padding-top:4.3mm!important;
+}
+.quo-v26 .q26-closing strong{font-size:10.2pt!important;line-height:1.3!important}
+.quo-v26 .q26-closing span{font-size:6.9pt!important}
+.quo-v26 .q26-footer{
+  font-size:6.8pt!important;
+  color:#697470!important;
+}
