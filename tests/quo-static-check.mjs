@@ -22,6 +22,7 @@ if(!index.includes('quo-production-v64.js?v=64'))fail('v64 production module is 
 if(!index.includes('quo-final-audit-v65.js?v=65'))fail('v65 final audit module is not loaded');else ok('v65 final audit module is loaded');
 if(!index.includes('quo-amendments-v66.js?v=66'))fail('v66 amendment module is not loaded');else ok('v66 amendment module is loaded');
 if(!index.includes('quo-dashboard-graph-v67.js?v=67'))fail('v67 dashboard graph module is not loaded');else ok('v67 dashboard graph is loaded');
+if(!index.includes('quo-finance-v68.js?v=68'))fail('v68 finance controls module is not loaded');else ok('v68 finance controls are loaded');
 if(index.includes('quo-customer-picker.js'))fail('Superseded customer picker is still loaded');else ok('Old customer picker is removed from runtime');
 
 const preview=read('quo-preview-v44.js');
@@ -61,6 +62,19 @@ for(const token of ["QUO_DASHBOARD_GRAPH_VERSION='67'",'Commercial Activity','qu
 }
 if(graph.includes('MutationObserver'))fail('Dashboard graph must not add a MutationObserver');
 if(!process.exitCode)ok('Six-month dashboard graph and inactive-document exclusions are present');
+
+const finance=read('quo-finance-v68.js');
+for(const token of ["QUO_FINANCE_VERSION='68'",'quo_create_adjustment_note','Invoice Aging & Collections','Activity Timeline','Credit Note','Debit Note','Credit Balance / Refund Due']){
+  if(!finance.includes(token))fail(`Finance v68 capability marker missing: ${token}`);
+}
+if(finance.includes('MutationObserver'))fail('Finance v68 must not add a MutationObserver');
+if(!process.exitCode)ok('Credit/debit notes, aging and activity timeline UI are present');
+
+const financeMigration=read('supabase/migrations/20260819_quo_financial_controls_aging_timeline_v68.sql');
+for(const token of ['credit_note','debit_note','quo_invoice_effective_total','quo_create_adjustment_note','quo_document_events','quo_log_document_event','adjustment_notes_without_invoice']){
+  if(!financeMigration.includes(token))fail(`Finance v68 database marker missing: ${token}`);
+}
+if(!process.exitCode)ok('Finance v68 database controls and timeline schema are present');
 
 if(process.exitCode)process.exit(process.exitCode);
 console.log('Quo static production checks passed.');
