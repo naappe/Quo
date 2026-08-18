@@ -23,20 +23,35 @@
     return {rows:out,next:i+((i<rows.length&&out[out.length-1]===rows[i])?1:0)};
   }
 
+  function reserveFinalRows(rows,capacity){
+    const tail=[];
+    let used=0,index=rows.length-1;
+    for(;index>=0;index--){
+      const w=rowWeight(rows[index]);
+      if(tail.length&&used+w>capacity)break;
+      tail.unshift(rows[index]);used+=w;
+      if(used>=capacity){index--;break;}
+    }
+    return {head:rows.slice(0,index+1),tail};
+  }
+
   function splitRows(rows,firstCap,midCap,finalCap){
     if(!rows.length)return [[]];
     if(totalWeight(rows)<=finalCap)return [rows];
+    const reserved=reserveFinalRows(rows,finalCap);
     const chunks=[];
     let index=0;
-    const first=takeByWeight(rows,index,firstCap);
-    chunks.push(first.rows);index=first.next;
-    while(index<rows.length){
-      const remain=rows.slice(index);
-      if(totalWeight(remain)<=finalCap){chunks.push(remain);break;}
-      const part=takeByWeight(rows,index,midCap);
-      if(!part.rows.length){chunks.push([rows[index]]);index++;continue;}
-      chunks.push(part.rows);index=part.next;
+    if(reserved.head.length){
+      const first=takeByWeight(reserved.head,index,firstCap);
+      if(first.rows.length)chunks.push(first.rows);
+      index=first.next;
+      while(index<reserved.head.length){
+        const part=takeByWeight(reserved.head,index,midCap);
+        if(!part.rows.length){chunks.push([reserved.head[index]]);index++;continue;}
+        chunks.push(part.rows);index=part.next;
+      }
     }
+    if(reserved.tail.length)chunks.push(reserved.tail);
     return chunks.filter(x=>x.length);
   }
 
