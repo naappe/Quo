@@ -110,7 +110,7 @@
     const before=menu.querySelector('[data-delete-doc]');
     if(d.id&&d.document_type!=='receipt'&&d.status!=='Draft'&&!isHistorical(d)){
       const amend=document.createElement('button');amend.type='button';amend.className='btn';amend.dataset.q66Amend='';
-      if(hasPayment(d)){amend.textContent='Amend - payment recorded';amend.disabled=true;amend.title='Paid or part-paid invoices require a Credit Note or Debit Note rather than a direct amendment.'}
+      if(hasPayment(d)){amend.textContent='Amend unavailable';amend.disabled=true;amend.title='Paid or part-paid invoices are locked and cannot be amended here.'}
       else amend.textContent='Amend Document';
       menu.insertBefore(amend,before||null);
     }
@@ -135,7 +135,7 @@
     if(mode==='amend'){
       if(d.document_type==='quotation')return '<b>A new quotation revision will be created.</b><span>The current quotation remains in history as Superseded. If it has a Proforma but no Invoice yet, that Proforma is also superseded automatically.</span>';
       if(d.document_type==='proforma')return '<b>A new Proforma revision will be created.</b><span>The current Proforma remains in history. An existing Invoice prevents this amendment.</span>';
-      return '<b>A corrected Invoice revision will be created.</b><span>This is allowed only before any payment is recorded. Paid or part-paid invoices require an adjustment-note workflow.</span>';
+      return '<b>A corrected Invoice revision will be created.</b><span>This is allowed only before any payment is recorded. Paid or part-paid invoices are locked and cannot be amended here.</span>';
     }
     if(d.document_type==='receipt')return '<b>Voiding this receipt reverses this recorded payment.</b><span>The related Invoice balance and payment status are recalculated automatically. The receipt remains in history as Cancelled.</span>';
     return '<b>This document will remain in history as Cancelled.</b><span>Linked later-stage documents can prevent a void so the commercial chain cannot be broken accidentally.</span>';

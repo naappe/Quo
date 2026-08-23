@@ -17,9 +17,21 @@ for(const file of localScripts){
 }
 if(!process.exitCode)ok(`${localScripts.length} referenced JavaScript files parse successfully`);
 
-for(const [file,version] of [['quo-pdf-pagination-v64.js','64'],['quo-production-v64.js','64'],['quo-final-audit-v65.js','65'],['quo-amendments-v66.js','66'],['quo-dashboard-graph-v67.js','67'],['quo-finance-v68.js','68'],['quo-finance-nav-v69.js','69'],['quo-finance-hardening-v70.js','70']]){
+for(const [file,version] of [
+  ['quo-pdf-pagination-v64.js','64'],
+  ['quo-production-v64.js','64'],
+  ['quo-final-audit-v65.js','65'],
+  ['quo-amendments-v66.js','66'],
+  ['quo-dashboard-graph-v67.js','67'],
+  ['quo-supply-usage-v73.js','73']
+]){
   if(!index.includes(`${file}?v=${version}`))fail(`${file} is not loaded at v${version}`);else ok(`${file} v${version} is loaded`);
 }
+
+for(const removed of ['quo-finance-v68.js','quo-finance-nav-v69.js','quo-finance-hardening-v70.js']){
+  if(index.includes(removed))fail(`Removed finance module is still loaded: ${removed}`);else ok(`${removed} is not loaded`);
+}
+if(/credit[_ ]note|debit[_ ]note/i.test(index))fail('Credit/Debit Note UI remains in index.html');else ok('Credit/Debit Note navigation is absent');
 if(index.includes('quo-customer-picker.js'))fail('Superseded customer picker is still loaded');else ok('Old customer picker is removed from runtime');
 
 const preview=read('quo-preview-v44.js');
@@ -41,39 +53,22 @@ if(!process.exitCode)ok('Final audit preview label guard is present');
 const amendments=read('quo-amendments-v66.js');
 for(const token of ["QUO_AMENDMENTS_VERSION='66'",'quo_amend_document','quo_void_document','Superseded - historical record','Issued document locked'])if(!amendments.includes(token))fail(`Amendment capability marker missing: ${token}`);
 if(!amendments.includes("const previousDashboard=renderDashboard"))fail('Superseded dashboard exclusion wrapper is missing');
-if(!process.exitCode)ok('Revision, void, history and dashboard amendment guards are present');
-
-const migration=read('supabase/migrations/20260819_quo_document_amendments_v66.sql');
-for(const token of ['revision_root_id','superseded_by_id','quo_guard_issued_content','quo_amend_document','quo_void_document',"status not in ('Cancelled','Superseded')"])if(!migration.includes(token))fail(`Database amendment marker missing: ${token}`);
-if(!process.exitCode)ok('Database revision and issued-document immutability migration is present');
+if(/Credit Note|Debit Note/i.test(amendments))fail('Removed Credit/Debit Note guidance remains in amendments');
+if(!process.exitCode)ok('Revision and void controls remain without Credit/Debit Note guidance');
 
 const graph=read('quo-dashboard-graph-v67.js');
 for(const token of ["QUO_DASHBOARD_GRAPH_VERSION='67'",'Commercial Activity','quoted:0','invoiced:0','collected:0',"new Set(['Cancelled','Superseded'])"])if(!graph.includes(token))fail(`Dashboard graph capability marker missing: ${token}`);
 if(graph.includes('MutationObserver'))fail('Dashboard graph must not add a MutationObserver');
 if(!process.exitCode)ok('Six-month dashboard graph and inactive-document exclusions are present');
 
-const finance=read('quo-finance-v68.js');
-for(const token of ["QUO_FINANCE_VERSION='68'",'quo_create_adjustment_note','Invoice Aging & Collections','Activity Timeline','Credit Note','Debit Note','Credit Balance / Refund Due'])if(!finance.includes(token))fail(`Finance v68 capability marker missing: ${token}`);
-if(finance.includes('MutationObserver'))fail('Finance v68 must not add a MutationObserver');
-if(!process.exitCode)ok('Credit/debit notes, aging and activity timeline UI are present');
+const supply=read('quo-supply-usage-v73.js');
+for(const token of ['Supply Usage','Select existing document','quo_add_supply_usage','quo_supply_usage_list','ADMIN ONLY'])if(!supply.includes(token))fail(`Supply Usage marker missing: ${token}`);
+if(/credit[_ ]note|debit[_ ]note/i.test(supply))fail('Supply Usage contains unrelated Credit/Debit Note logic');
+if(!process.exitCode)ok('Supply Usage remains focused on existing documents and supplies');
 
-const financeNav=read('quo-finance-nav-v69.js');
-for(const token of ["QUO_FINANCE_NAV_VERSION='69'",'credit_note','debit_note','openType(type)','data-q69-filter'])if(!financeNav.includes(token))fail(`Finance v69 navigation marker missing: ${token}`);
-if(financeNav.includes('MutationObserver'))fail('Finance v69 navigation must not add a MutationObserver');
-if(!process.exitCode)ok('Credit/debit navigation and filter chips are wired');
-
-const financeMigration=read('supabase/migrations/20260819_quo_financial_controls_aging_timeline_v68.sql');
-for(const token of ['credit_note','debit_note','quo_invoice_effective_total','quo_create_adjustment_note','quo_document_events','quo_log_document_event','adjustment_notes_without_invoice'])if(!financeMigration.includes(token))fail(`Finance v68 database marker missing: ${token}`);
-if(!process.exitCode)ok('Finance v68 database controls and timeline schema are present');
-
-const hardening=read('quo-finance-hardening-v70.js');
-for(const token of ["QUO_FINANCE_HARDENING_VERSION='70'",'quo_invoice_finance_snapshot','quo_invoice_aging','hydrateInvoice','Server-verified outstanding balances'])if(!hardening.includes(token))fail(`Finance v70 capability marker missing: ${token}`);
-if(hardening.includes('MutationObserver'))fail('Finance v70 must not add a MutationObserver');
-if(!process.exitCode)ok('Server-backed invoice finance hydration and aging are present');
-
-const hardeningMigration=read('supabase/migrations/20260819_quo_finance_server_snapshot_v70.sql');
-for(const token of ['quo_invoice_finance_snapshot','quo_invoice_aging','quo_documents_source_type_active_idx','Indian/Maldives'])if(!hardeningMigration.includes(token))fail(`Finance v70 database marker missing: ${token}`);
-if(!process.exitCode)ok('Finance v70 server-side snapshot and aging migration is present');
+const cleanup=read('supabase/migrations/20260823_quo_remove_credit_debit_cleanup_v74.sql');
+for(const token of ["document_type in ('quotation','proforma','invoice','receipt')",'drop function if exists public.quo_create_adjustment_note','drop trigger if exists quo_adjustment_reconcile_invoice'])if(!cleanup.includes(token))fail(`v74 cleanup marker missing: ${token}`);
+if(!process.exitCode)ok('Database cleanup removes Credit/Debit Note creation paths');
 
 if(process.exitCode)process.exit(process.exitCode);
 console.log('Quo static production checks passed.');

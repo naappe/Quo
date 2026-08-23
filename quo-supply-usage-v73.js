@@ -5,7 +5,7 @@
   let searchTimer=null;
   const isAdmin=()=>S.role==='admin';
   const n=v=>{const x=Number(v);return Number.isFinite(x)?x:0};
-  const today=()=>new Date().toISOString().slice(0,10);
+  const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Indian/Maldives',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
   const qfmt=(v,u='')=>`${n(v).toLocaleString('en-US',{maximumFractionDigits:4})}${u?' '+u:''}`;
   const docs=()=>[...(S.docs||[])].filter(d=>!d.deleted_at&&['quotation','invoice'].includes(d.document_type)).sort((a,b)=>String(b.updated_at||b.created_at||'').localeCompare(String(a.updated_at||a.created_at||'')));
   const docLabel=d=>`${d.document_number||'Document'} · ${d.customer_name||'No customer'}${d.event_name?' · '+d.event_name:''}`;
