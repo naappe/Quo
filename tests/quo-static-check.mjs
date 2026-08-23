@@ -23,7 +23,7 @@ for(const [file,version] of [
   ['quo-final-audit-v65.js','65'],
   ['quo-amendments-v66.js','66'],
   ['quo-dashboard-graph-v67.js','67'],
-  ['quo-supply-usage-v73.js','73']
+  ['quo-supply-usage-v73.js','75']
 ]){
   if(!index.includes(`${file}?v=${version}`))fail(`${file} is not loaded at v${version}`);else ok(`${file} v${version} is loaded`);
 }
@@ -62,13 +62,18 @@ if(graph.includes('MutationObserver'))fail('Dashboard graph must not add a Mutat
 if(!process.exitCode)ok('Six-month dashboard graph and inactive-document exclusions are present');
 
 const supply=read('quo-supply-usage-v73.js');
-for(const token of ['Supply Usage','Select existing document','quo_add_supply_usage','quo_supply_usage_list','ADMIN ONLY'])if(!supply.includes(token))fail(`Supply Usage marker missing: ${token}`);
+for(const token of ['Quo v75','Supply Usage','Vendor','+ Add Line','quo_add_supply_usage_lines','quo_supply_usage_vendor_options','quo_supply_usage_list','ADMIN ONLY'])if(!supply.includes(token))fail(`Supply Usage marker missing: ${token}`);
 if(/credit[_ ]note|debit[_ ]note/i.test(supply))fail('Supply Usage contains unrelated Credit/Debit Note logic');
-if(!process.exitCode)ok('Supply Usage remains focused on existing documents and supplies');
+if(!supply.includes("timeZone:'Indian/Maldives'"))fail('Supply Usage Maldives date guard is missing');
+if(!process.exitCode)ok('Supply Usage supports vendor lines, responsive layout and Maldives dates');
 
 const cleanup=read('supabase/migrations/20260823_quo_remove_credit_debit_cleanup_v74.sql');
 for(const token of ["document_type in ('quotation','proforma','invoice','receipt')",'drop function if exists public.quo_create_adjustment_note','drop trigger if exists quo_adjustment_reconcile_invoice'])if(!cleanup.includes(token))fail(`v74 cleanup marker missing: ${token}`);
 if(!process.exitCode)ok('Database cleanup removes Credit/Debit Note creation paths');
+
+const supplyMigration=read('supabase/migrations/20260823_quo_supply_usage_vendor_lines_v75.sql');
+for(const token of ['vendor_name','quo_supply_usage_vendor_options','quo_add_supply_usage_lines','A maximum of 50 supply lines'])if(!supplyMigration.includes(token))fail(`v75 Supply Usage database marker missing: ${token}`);
+if(!process.exitCode)ok('Database Supply Usage supports vendor history and transactional multi-line saves');
 
 if(process.exitCode)process.exit(process.exitCode);
 console.log('Quo static production checks passed.');
