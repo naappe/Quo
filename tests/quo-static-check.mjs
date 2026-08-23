@@ -23,7 +23,7 @@ for(const [file,version] of [
   ['quo-final-audit-v65.js','65'],
   ['quo-amendments-v66.js','66'],
   ['quo-dashboard-graph-v67.js','67'],
-  ['quo-supply-usage-v73.js','76']
+  ['quo-supply-usage-v73.js','77']
 ]){
   if(!index.includes(`${file}?v=${version}`))fail(`${file} is not loaded at v${version}`);else ok(`${file} v${version} is loaded`);
 }
@@ -33,6 +33,9 @@ for(const removed of ['quo-finance-v68.js','quo-finance-nav-v69.js','quo-finance
 }
 if(/credit[_ ]note|debit[_ ]note/i.test(index))fail('Credit/Debit Note UI remains in index.html');else ok('Credit/Debit Note navigation is absent');
 if(index.includes('quo-customer-picker.js'))fail('Superseded customer picker is still loaded');else ok('Old customer picker is removed from runtime');
+
+for(const token of ['Payment Requests','Payment Receipts','Catering Supplies','Request customer payment'])if(!index.includes(token))fail(`Plain-language navigation marker missing: ${token}`);
+if(!process.exitCode)ok('Plain-language navigation is present before JavaScript loads');
 
 const preview=read('quo-preview-v44.js');
 const oldLoop="if(modal&&!modal.classList.contains('hidden')&&fullPages().length)showFullPage(fullPageIndex)";
@@ -62,10 +65,11 @@ if(graph.includes('MutationObserver'))fail('Dashboard graph must not add a Mutat
 if(!process.exitCode)ok('Six-month dashboard graph and inactive-document exclusions are present');
 
 const supply=read('quo-supply-usage-v73.js');
-for(const token of ['Quo v76','Final Invoice','Vendor','+ Add Line','quo_add_supply_usage_lines','quo_supply_usage_vendor_options','quo_supply_usage_document_options','quo_supply_usage_list','ADMIN ONLY'])if(!supply.includes(token))fail(`Supply Usage marker missing: ${token}`);
-if(/credit[_ ]note|debit[_ ]note/i.test(supply))fail('Supply Usage contains unrelated Credit/Debit Note logic');
-if(!supply.includes("timeZone:'Indian/Maldives'"))fail('Supply Usage Maldives date guard is missing');
-if(!process.exitCode)ok('Supply Usage prefers Final Invoice, supports vendor lines and keeps Maldives dates');
+for(const token of ['Quo v77','Catering Supplies','Supplier','+ Add Another Supply','Save Supplies','friendlyStatus','Waiting for Customer','Previous Version','quo_add_supply_usage_lines','quo_supply_usage_vendor_options','quo_supply_usage_document_options','quo_supply_usage_list','ADMIN ONLY'])if(!supply.includes(token))fail(`Catering Supplies marker missing: ${token}`);
+if(/credit[_ ]note|debit[_ ]note/i.test(supply))fail('Catering Supplies contains unrelated Credit/Debit Note logic');
+if(!supply.includes("timeZone:'Indian/Maldives'"))fail('Catering Supplies Maldives date guard is missing');
+if(!supply.includes("newBtn.hidden=true")||!supply.includes("prepared.hidden=true"))fail('Catering Supplies should hide document-creation controls');
+if(!process.exitCode)ok('Catering Supplies uses plain language, Final Invoice preference and Maldives dates');
 
 const cleanup=read('supabase/migrations/20260823_quo_remove_credit_debit_cleanup_v74.sql');
 for(const token of ["document_type in ('quotation','proforma','invoice','receipt')",'drop function if exists public.quo_create_adjustment_note','drop trigger if exists quo_adjustment_reconcile_invoice'])if(!cleanup.includes(token))fail(`v74 cleanup marker missing: ${token}`);
