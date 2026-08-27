@@ -1,156 +1,122 @@
-/* Quo v79 - keep guest count, per-pax billing and previews in sync. */
+/* Quo v85 - one authoritative controller for service inclusion, guest count and Pax billing. */
 (function(){
-  const EPS=0.005;
+  const PAX_UNITS=new Set(['pax','person','persons','guest','guests']);
 
-  function normaliseUnit(value){
-    return String(value||'').trim().toLowerCase();
+  function isPax(value){return PAX_UNITS.has(String(value||'').trim().toLowerCase())}
+  function current(){return typeof S!=='undefined'&&S.view==='editor'?S.current:null}
+
+  function paxRows(d){
+    return (d?.items||[]).map((item,index)=>({item,index})).filter(({item})=>isPax(item?.unit));
   }
 
-  function isPaxUnit(value){
-    return ['pax','person','persons','guest','guests'].includes(normaliseUnit(value));
+  function syncPaxRows(d,guests){
+    if(!d||!d.service_enabled)return;
+    paxRows(d).forEach(({item,index})=>{
+      item.qty=guests;
+      const qty=document.querySelector(`[data-item="${index}"] [data-item-field="qty"]`);
+      if(qty&&qty.value!==String(guests))qty.value=String(guests);
+    });
   }
 
-  function perPaxRows(d){
-    return (d?.items||[])
-      .map((item,index)=>({item,index}))
-      .filter(row=>String(row.item?.description||'').trim())
-      .filter(row=>isPaxUnit(row.item?.unit));
+  function markChanged(){
+    if(typeof S!=='undefined')S.editorDirty=true;
+    if(typeof updateEditorSaveState==='function')updateEditorSaveState();
   }
 
-  function refreshEditorAmountsAndPreview(){
+  function refreshSoft(){
     try{
       if(typeof renderEditorSoft==='function')renderEditorSoft();
       else if(typeof window.quoRefreshLivePreview==='function')window.quoRefreshLivePreview();
-    }catch(e){
-      console.warn('Could not refresh Pax preview',e);
-    }
+    }catch(e){console.warn('Service preview refresh failed',e)}
   }
 
-  function syncPaxRowsToGuests(guestValue){
-    const d=S?.current;
-    if(!d||!d.service_enabled)return false;
-    const guests=num(guestValue);
-    if(!(guests>=0))return false;
+  function toggleServiceArea(enabled){
+    const area=document.getElementById('eventFields');
+    if(area)area.classList.toggle('hidden',!enabled);
+  }
 
-    let changed=false;
-    perPaxRows(d).forEach(({item,index})=>{
-      if(Math.abs(num(item.qty)-guests)<=EPS)return;
-      item.qty=guests;
-      const input=document.querySelector(`[data-item="${index}"] [data-item-field="qty"]`);
-      if(input)input.value=String(guests);
-      changed=true;
+  function bindServiceControls(){
+    const d=current();if(!d)return;
+
+    const include=document.querySelector('[data-field="service_enabled"]');
+    if(include){
+      const handle=()=>{
+        d.service_enabled=!!include.checked;
+        toggleServiceArea(d.service_enabled);
+        if(d.service_enabled)syncPaxRows(d,num(d.service_pax));
+        markChanged();
+        refreshSoft();
+      };
+      /* Replace the generic handlers so this checkbox does not rebuild the whole editor. */
+      include.oninput=handle;
+      include.onchange=handle;
+    }
+
+    const guests=document.querySelector('[data-field="service_pax"]');
+    if(guests){
+      const handle=()=>{
+        const value=Math.max(0,num(guests.value));
+        d.service_pax=value;
+        syncPaxRows(d,value);
+        markChanged();
+        refreshSoft();
+      };
+      guests.oninput=handle;
+      guests.onchange=handle;
+    }
+
+    document.querySelectorAll('[data-item-field="unit"]').forEach(unit=>{
+      const originalInput=unit.oninput;
+      unit.oninput=function(e){
+        if(typeof originalInput==='function')originalInput.call(this,e);
+        const d2=current();if(!d2||!d2.service_enabled||!isPax(this.value))return;
+        const row=this.closest('[data-item]'),index=Number(row?.dataset?.item);
+        if(!Number.isInteger(index)||!d2.items?.[index])return;
+        d2.items[index].unit=this.value;
+        d2.items[index].qty=Math.max(0,num(d2.service_pax));
+        const qty=row.querySelector('[data-item-field="qty"]');if(qty)qty.value=String(d2.items[index].qty);
+        markChanged();refreshSoft();
+      };
     });
-
-    if(changed){
-      S.editorDirty=true;
-      refreshEditorAmountsAndPreview();
-    }
-    return changed;
   }
 
-  function mismatch(){
-    if(typeof readEditor==='function')readEditor();
-    const d=S?.current;
-    if(!d||!d.service_enabled)return null;
-    const guests=num(d.service_pax);
-    if(!(guests>0))return null;
-    const rows=perPaxRows(d);
-    if(rows.length!==1)return null;
-    const row=rows[0];
-    const qty=num(row.item.qty);
-    if(Math.abs(qty-guests)<=EPS)return null;
-    return {d,guests,qty,index:row.index,item:row.item};
-  }
+  /* Bind after the normal editor bindings. Later Quo layers can still wrap bindDynamic safely. */
+  try{
+    const previousBind=bindDynamic;
+    bindDynamic=function(){
+      const result=previousBind.apply(this,arguments);
+      bindServiceControls();
+      return result;
+    };
+  }catch(e){console.warn('Service controls could not bind',e)}
 
-  function focusQty(index){
-    const input=document.querySelector(`[data-item="${index}"] [data-item-field="qty"]`);
-    if(input){input.focus();input.select?.();}
-  }
-
-  function setPaxQty(m){
-    m.d.items[m.index].qty=m.guests;
-    const input=document.querySelector(`[data-item="${m.index}"] [data-item-field="qty"]`);
-    if(input)input.value=String(m.guests);
-    S.editorDirty=true;
-    refreshEditorAmountsAndPreview();
-  }
-
-  function resolveMismatch(action){
-    const m=mismatch();
-    if(!m)return true;
-    const description=String(m.item.description||'Per Pax item').trim();
-    const useGuestCount=confirm(
-      `Guest count is ${m.guests.toLocaleString()} Pax, but "${description}" is billed for ${m.qty.toLocaleString()} Pax.\n\n`+
-      `Use ${m.guests.toLocaleString()} Pax for this line before ${action}?`
-    );
-    if(useGuestCount){
-      setPaxQty(m);
-      return true;
-    }
-    alert('Guests and the single Per Pax quantity do not match. Update either Guests or Qty before continuing.');
-    focusQty(m.index);
-    return false;
-  }
-
-  /* Changing Guests is authoritative for rows billed per Pax. */
-  document.addEventListener('input',e=>{
-    const field=e.target?.closest?.('[data-field="service_pax"]');
-    if(!field||!S?.current)return;
-    S.current.service_pax=num(field.value);
-    syncPaxRowsToGuests(field.value);
-  },true);
-
-  document.addEventListener('change',e=>{
-    const field=e.target?.closest?.('[data-field="service_pax"]');
-    if(field&&S?.current){
-      S.current.service_pax=num(field.value);
-      syncPaxRowsToGuests(field.value);
-      refreshEditorAmountsAndPreview();
-      return;
-    }
-
-    /* If an item is changed to a Pax unit, initialise its Qty from Guests. */
-    const unit=e.target?.closest?.('[data-item-field="unit"]');
-    if(!unit||!isPaxUnit(unit.value)||!S?.current?.service_enabled)return;
-    const row=unit.closest('[data-item]');
-    const index=Number(row?.dataset?.item);
-    if(!Number.isInteger(index)||!S.current.items?.[index])return;
-    const guests=num(S.current.service_pax);
-    if(!(guests>0))return;
-    S.current.items[index].unit=unit.value;
-    S.current.items[index].qty=guests;
-    const qtyInput=row.querySelector('[data-item-field="qty"]');
-    if(qtyInput)qtyInput.value=String(guests);
-    S.editorDirty=true;
-    refreshEditorAmountsAndPreview();
-  },true);
-
+  /* Before save/conversion, make the document model authoritative and keep every Pax row aligned. */
   if(typeof saveCurrent==='function'){
-    const previousSaveCurrent=saveCurrent;
+    const previousSave=saveCurrent;
     saveCurrent=async function(showToast=true){
-      if(!resolveMismatch('saving'))return false;
-      return previousSaveCurrent(showToast);
+      try{if(typeof readEditor==='function')readEditor()}catch(e){}
+      const d=current();if(d&&d.service_enabled){d.service_pax=Math.max(0,num(d.service_pax));syncPaxRows(d,d.service_pax)}
+      return previousSave(showToast);
     };
   }
 
   if(typeof convertCurrent==='function'){
-    const previousConvertCurrent=convertCurrent;
+    const previousConvert=convertCurrent;
     convertCurrent=function(type){
-      if(!resolveMismatch('converting'))return;
-      return previousConvertCurrent(type);
+      try{if(typeof readEditor==='function')readEditor()}catch(e){}
+      const d=current();if(d&&d.service_enabled){d.service_pax=Math.max(0,num(d.service_pax));syncPaxRows(d,d.service_pax)}
+      return previousConvert(type);
     };
   }
 
   if(typeof openFullPreview==='function'){
-    const previousOpenFullPreview=openFullPreview;
+    const previousPreview=openFullPreview;
     openFullPreview=function(){
-      const m=mismatch();
-      if(m){
-        alert(`Guest count is ${m.guests.toLocaleString()} Pax, but the Per Pax line is ${m.qty.toLocaleString()} Pax. Correct the mismatch before previewing the final PDF.`);
-        focusQty(m.index);
-        return;
-      }
-      return previousOpenFullPreview();
+      try{if(typeof readEditor==='function')readEditor()}catch(e){}
+      const d=current();if(d&&d.service_enabled){d.service_pax=Math.max(0,num(d.service_pax));syncPaxRows(d,d.service_pax)}
+      return previousPreview.apply(this,arguments);
     };
   }
+
+  bindServiceControls();
 })();
