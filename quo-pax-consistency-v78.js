@@ -1,4 +1,4 @@
-/* Quo v78 - guard against guest-count / per-pax billing mismatches. */
+/* Quo v79 - keep guest count, per-pax billing and previews in sync. */
 (function(){
   const EPS=0.005;
 
@@ -6,11 +6,46 @@
     return String(value||'').trim().toLowerCase();
   }
 
+  function isPaxUnit(value){
+    return ['pax','person','persons','guest','guests'].includes(normaliseUnit(value));
+  }
+
   function perPaxRows(d){
     return (d?.items||[])
       .map((item,index)=>({item,index}))
       .filter(row=>String(row.item?.description||'').trim())
-      .filter(row=>['pax','person','persons','guest','guests'].includes(normaliseUnit(row.item?.unit)));
+      .filter(row=>isPaxUnit(row.item?.unit));
+  }
+
+  function refreshEditorAmountsAndPreview(){
+    try{
+      if(typeof renderEditorSoft==='function')renderEditorSoft();
+      else if(typeof window.quoRefreshLivePreview==='function')window.quoRefreshLivePreview();
+    }catch(e){
+      console.warn('Could not refresh Pax preview',e);
+    }
+  }
+
+  function syncPaxRowsToGuests(guestValue){
+    const d=S?.current;
+    if(!d||!d.service_enabled)return false;
+    const guests=num(guestValue);
+    if(!(guests>=0))return false;
+
+    let changed=false;
+    perPaxRows(d).forEach(({item,index})=>{
+      if(Math.abs(num(item.qty)-guests)<=EPS)return;
+      item.qty=guests;
+      const input=document.querySelector(`[data-item="${index}"] [data-item-field="qty"]`);
+      if(input)input.value=String(guests);
+      changed=true;
+    });
+
+    if(changed){
+      S.editorDirty=true;
+      refreshEditorAmountsAndPreview();
+    }
+    return changed;
   }
 
   function mismatch(){
@@ -37,6 +72,7 @@
     const input=document.querySelector(`[data-item="${m.index}"] [data-item-field="qty"]`);
     if(input)input.value=String(m.guests);
     S.editorDirty=true;
+    refreshEditorAmountsAndPreview();
   }
 
   function resolveMismatch(action){
@@ -55,6 +91,39 @@
     focusQty(m.index);
     return false;
   }
+
+  /* Changing Guests is authoritative for rows billed per Pax. */
+  document.addEventListener('input',e=>{
+    const field=e.target?.closest?.('[data-field="service_pax"]');
+    if(!field||!S?.current)return;
+    S.current.service_pax=num(field.value);
+    syncPaxRowsToGuests(field.value);
+  },true);
+
+  document.addEventListener('change',e=>{
+    const field=e.target?.closest?.('[data-field="service_pax"]');
+    if(field&&S?.current){
+      S.current.service_pax=num(field.value);
+      syncPaxRowsToGuests(field.value);
+      refreshEditorAmountsAndPreview();
+      return;
+    }
+
+    /* If an item is changed to a Pax unit, initialise its Qty from Guests. */
+    const unit=e.target?.closest?.('[data-item-field="unit"]');
+    if(!unit||!isPaxUnit(unit.value)||!S?.current?.service_enabled)return;
+    const row=unit.closest('[data-item]');
+    const index=Number(row?.dataset?.item);
+    if(!Number.isInteger(index)||!S.current.items?.[index])return;
+    const guests=num(S.current.service_pax);
+    if(!(guests>0))return;
+    S.current.items[index].unit=unit.value;
+    S.current.items[index].qty=guests;
+    const qtyInput=row.querySelector('[data-item-field="qty"]');
+    if(qtyInput)qtyInput.value=String(guests);
+    S.editorDirty=true;
+    refreshEditorAmountsAndPreview();
+  },true);
 
   if(typeof saveCurrent==='function'){
     const previousSaveCurrent=saveCurrent;
