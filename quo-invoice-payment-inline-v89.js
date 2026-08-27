@@ -54,7 +54,7 @@
     const field=statusSelect.closest('.field');
     if(!field) return;
 
-    // The original document status stays internal. Do not let readEditor() overwrite it.
+    // Keep Draft/Sent as internal document workflow state. This visible field is payment state.
     statusSelect.removeAttribute('data-field');
     statusSelect.id='quoInvoicePaymentStatus';
     field.querySelector('label').textContent='Payment Status';
@@ -89,15 +89,14 @@
       }
       const wantsPaid=statusSelect.value==='Paid';
       details?.classList.toggle('hidden',!wantsPaid);
+      const save=document.querySelector('[data-save]');
       if(wantsPaid){
         const date=document.getElementById('quoInlinePaymentDate');
         if(date&&!date.value) date.value=maleToday();
-        document.querySelector('[data-save]')?.setAttribute('data-q89-payment','1');
-        const save=document.querySelector('[data-save]');
-        if(save) save.textContent='Save & Mark Paid';
-      }else{
-        const save=document.querySelector('[data-save]');
-        if(save){save.removeAttribute('data-q89-payment');save.textContent=S.current.id?'Save Changes':'Save & Number'}
+        if(save){save.setAttribute('data-q89-payment','1');save.textContent='Save & Mark Paid'}
+      }else if(save){
+        save.removeAttribute('data-q89-payment');
+        save.textContent=S.current.id?'Save Changes':'Save & Number';
       }
       markDirty();
     };
@@ -107,13 +106,41 @@
       if(el){el.oninput=markDirty;el.onchange=markDirty}
     });
 
-    // The invoice now has one primary payment path. Keep the old modal out of the main editor.
+    // One primary payment path: payment status + method + Save.
     document.querySelectorAll('.quo-record-payment').forEach(b=>b.style.display='none');
     document.querySelectorAll('.editor-card h3').forEach(h=>{
       if(h.textContent.trim()==='Payment'&&h.closest('.optional-card')) h.closest('.optional-card').style.display='none';
     });
 
     setPaymentBadges(state);
+  }
+
+  async function saveExistingInvoice(showToast=true){
+    readEditor();
+    const d=S.current;
+    const name=prepared();
+    if(!name){alert('Enter Prepared By before saving.');document.getElementById('preparedBy')?.focus();return false}
+    if(!d.customer_name?.trim()){alert('Enter the customer name before saving.');return false}
+    if(!(d.items||[]).some(i=>String(i.description||'').trim())){alert('Add at least one item description.');return false}
+    try{
+      const p=payload(d);
+      delete p.document_number;
+      delete p.document_type;
+      // Preserve the real document workflow status. Payment status is managed by recorded payments.
+      p.status=d.status;
+      const r=await sb.from('quo_documents').update({...p,updated_by:null,updated_by_name:name}).eq('id',d.id).select('*').single();
+      if(r.error) throw r.error;
+      S.current={...d,...r.data};
+      await refreshDocs();
+      S.editorDirty=false;
+      if(showToast) toast(`${S.current.document_number} saved`);
+      render();
+      return true;
+    }catch(e){
+      console.error(e);
+      alert('Save failed: '+(e?.message||'Unknown error'));
+      return false;
+    }
   }
 
   const previousSave=saveCurrent;
@@ -132,7 +159,9 @@
       }
     }
 
-    const saved=await previousSave(wantsPaid?false:showToast);
+    const saved=isInvoice&&S.current?.id
+      ?await saveExistingInvoice(wantsPaid?false:showToast)
+      :await previousSave(wantsPaid?false:showToast);
     if(!saved) return false;
     if(!wantsPaid) return true;
 
