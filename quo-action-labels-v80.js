@@ -1,24 +1,24 @@
-/* Quo v80 - use Edit for document actions that open the editor. */
+/* Quo v81 - use Edit labels without DOM observers. */
 (function(){
   const SELECTOR='.row-actions button[data-open], .deal-actions button[data-open]';
 
   function applyEditLabels(root=document){
     root.querySelectorAll?.(SELECTOR).forEach(button=>{
-      if(button.textContent.trim()==='Edit')return;
-      button.textContent='Edit';
-      button.setAttribute('aria-label','Edit document');
-      button.setAttribute('title','Edit document');
+      if(button.textContent.trim()!=='Edit')button.textContent='Edit';
+      if(button.getAttribute('aria-label')!=='Edit document')button.setAttribute('aria-label','Edit document');
+      if(button.getAttribute('title')!=='Edit document')button.setAttribute('title','Edit document');
     });
   }
 
-  applyEditLabels();
+  /* Apply once after each normal Quo render/bind cycle. No MutationObserver. */
+  try{
+    const previousBind=bindDynamic;
+    bindDynamic=function(){
+      const result=previousBind.apply(this,arguments);
+      applyEditLabels(document.getElementById('view')||document);
+      return result;
+    };
+  }catch(e){}
 
-  const observer=new MutationObserver(mutations=>{
-    let needsUpdate=false;
-    for(const mutation of mutations){
-      if(mutation.type==='childList'&&mutation.addedNodes.length){needsUpdate=true;break;}
-    }
-    if(needsUpdate)applyEditLabels();
-  });
-  observer.observe(document.getElementById('view')||document.body,{childList:true,subtree:true});
+  applyEditLabels(document.getElementById('view')||document);
 })();
