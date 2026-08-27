@@ -17,6 +17,8 @@
   function addStamp(root,d){
     if(!root||!isPaidInvoice(d))return;
     root.querySelectorAll('.pdf-page').forEach(page=>{
+      const status=page.querySelector('.pdf-doc .status');
+      if(status){status.textContent='PAID';status.classList.add('quo-paid-red-v93')}
       if(page.querySelector('.quo-paid-stamp-v93'))return;
       const stamp=document.createElement('div');
       stamp.className='quo-paid-stamp-v93';
@@ -59,6 +61,7 @@
       .quo-paid-stamp-v93 img{display:block;width:22mm;height:auto;max-height:22mm;object-fit:contain;filter:sepia(1) saturate(4) hue-rotate(165deg) brightness(.72) contrast(1.05)}
       .quo-paid-stamp-v93 strong{display:block;color:#c62828;font-family:Arial,Helvetica,sans-serif;font-size:8mm;line-height:.88;letter-spacing:.8mm;font-weight:900;border-top:.65mm solid #c62828;padding-top:1.1mm;width:100%;text-align:center}
       .quo-paid-red-v93{background:#fff1f1!important;color:#b42318!important;border-color:#efb2ad!important}
+      .pdf-doc .status.quo-paid-red-v93{background:#fff1f1!important;color:#b42318!important;border:1px solid #efb2ad!important}
       .badge.paid,.payment-paid{color:#b42318!important}
       @media screen and (max-width:760px){.quo-paid-stamp-v93{right:10mm;top:43mm}}
     `;
