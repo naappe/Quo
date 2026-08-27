@@ -1,4 +1,4 @@
-/* Quo v81 - Edit means direct editing of the current commercial document. */
+/* Quo v82 - direct editing without self-triggering DOM observers. */
 (function(){
   const INACTIVE=new Set(['Cancelled','Superseded']);
 
@@ -6,41 +6,34 @@
     return !!d?.id&&d.document_type!=='receipt'&&!INACTIVE.has(String(d.status||''));
   }
 
+  function enableControl(el){
+    if(!el)return;
+    if(el.disabled)el.disabled=false;
+    if(el.readOnly)el.readOnly=false;
+    if(el.hasAttribute('aria-readonly'))el.removeAttribute('aria-readonly');
+    if(el.hasAttribute('aria-disabled'))el.removeAttribute('aria-disabled');
+    if(el.classList?.contains('q66-disabled-control'))el.classList.remove('q66-disabled-control');
+  }
+
   function unlockCurrentDocument(){
     if(typeof S==='undefined'||S.view!=='editor'||!canDirectEdit(S.current))return;
 
-    /* Remove the old protected-document message and amendment-only action. */
-    document.querySelector('.q66-lock-note')?.remove();
+    const lockNote=document.querySelector('.q66-lock-note');
+    if(lockNote)lockNote.remove();
     document.querySelectorAll('[data-q66-amend]').forEach(el=>el.remove());
 
-    /* All normal document fields are editable when the user chose Edit. */
-    document.querySelectorAll('[data-field]').forEach(el=>{
-      el.disabled=false;
-      el.readOnly=false;
-      el.removeAttribute('aria-readonly');
-      el.removeAttribute('aria-disabled');
-    });
-    document.querySelectorAll('[data-item-field]').forEach(el=>{
-      el.disabled=false;
-      el.readOnly=false;
-      el.removeAttribute('aria-readonly');
-      el.removeAttribute('aria-disabled');
-    });
-    document.querySelectorAll('[data-add-item],[data-remove-item],[data-quo-terms-add],[data-quo-terms-remove],.quo-terms-action').forEach(el=>{
-      el.disabled=false;
-      el.classList.remove('q66-disabled-control');
-      el.removeAttribute('aria-disabled');
-    });
+    document.querySelectorAll('[data-field],[data-item-field],[data-add-item],[data-remove-item],[data-quo-terms-add],[data-quo-terms-remove],.quo-terms-action').forEach(enableControl);
 
     const save=document.querySelector('[data-save]');
     if(save){
-      save.hidden=false;
-      save.disabled=false;
-      save.textContent='Save Changes';
-      save.title='Save changes to this document';
+      if(save.hidden)save.hidden=false;
+      if(save.disabled)save.disabled=false;
+      if(save.textContent!=='Save Changes')save.textContent='Save Changes';
+      if(save.title!=='Save changes to this document')save.title='Save changes to this document';
     }
   }
 
+  /* quo-amendments runs inside bindDynamic first; unlock once after that pass. */
   try{
     const previousBind=bindDynamic;
     bindDynamic=function(){
@@ -50,12 +43,6 @@
     };
   }catch(e){}
 
-  /* The editor is frequently rebuilt after field changes; keep direct-edit state applied. */
-  const host=document.getElementById('view');
-  if(host){
-    const observer=new MutationObserver(()=>unlockCurrentDocument());
-    observer.observe(host,{childList:true,subtree:true});
-  }
-
+  /* No MutationObserver here: observing and rewriting the same editor caused a render loop. */
   unlockCurrentDocument();
 })();
