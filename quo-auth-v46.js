@@ -222,7 +222,14 @@
     if(settings&&!isAdmin()){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();toast('Settings are admin-only.');}
   },true);
 
-  const permissionObserver=new MutationObserver(()=>{if(S.authUser)applyPermissions()});
+  // Rendering replaces large parts of the page. Run this once after a paint rather
+  // than once for every inserted row, otherwise large document lists can feel frozen.
+  let permissionRefreshQueued=false;
+  const permissionObserver=new MutationObserver(()=>{
+    if(!S.authUser||permissionRefreshQueued)return;
+    permissionRefreshQueued=true;
+    requestAnimationFrame(()=>{permissionRefreshQueued=false;applyPermissions()});
+  });
   permissionObserver.observe(document.body,{childList:true,subtree:true});
 
   if(!document.getElementById('quoAuthV46Style')){
