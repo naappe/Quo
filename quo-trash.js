@@ -98,5 +98,12 @@
 
   window.quoRefreshTrashAccess=installTrashNav;
   installTrashNav();
-  const mo=new MutationObserver(()=>installTrashNav());mo.observe(document.body,{childList:true,subtree:true});
+  // A render can add hundreds of nodes. Coalesce observer events into one nav check.
+  let trashNavQueued=false;
+  const mo=new MutationObserver(()=>{
+    if(trashNavQueued)return;
+    trashNavQueued=true;
+    requestAnimationFrame(()=>{trashNavQueued=false;installTrashNav()});
+  });
+  mo.observe(document.body,{childList:true,subtree:true});
 })();
