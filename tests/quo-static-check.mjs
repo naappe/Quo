@@ -83,5 +83,16 @@ const finalInvoiceMigration=read('supabase/migrations/20260823_quo_supply_usage_
 for(const token of ['quo_supply_usage_document_options','Final Invoice','document_type=\'invoice\'','document_type=\'quotation\'','already has Final Invoice'])if(!finalInvoiceMigration.includes(token))fail(`v76 Final Invoice rule marker missing: ${token}`);
 if(!process.exitCode)ok('Database enforces Final Invoice preference and quotation fallback');
 
+// Supplied Quo mockup contract: exact White Saffron palette and shell geometry.
+const theme=read('quo-theme-v107.css');
+for(const token of ['--bg:#fafaf9','--brand:#f59e0b','--brand-soft:#fef3c7','--surface-2:#f5f5f4','--mockup-sidebar-w:240px','--mockup-radius:10px','--mockup-page-pad:24px']){
+  if(!theme.includes(token))fail(`Supplied mockup token missing: ${token}`);
+}
+for(const token of ['.nav button.active::before','width:3px','background:var(--brand)','@media(max-width:768px)','bottom:0','border-top:1px solid var(--line)','height:auto']){
+  if(!theme.includes(token))fail(`Supplied mockup layout marker missing: ${token}`);
+}
+if(!theme.includes('--surface-2:#44403c'))fail('Supplied mockup dark surface token missing');
+if(!process.exitCode)ok('Supplied White Saffron mockup palette and responsive shell contract are present');
+
 if(process.exitCode)process.exit(process.exitCode);
 console.log('Quo static production checks passed.');
