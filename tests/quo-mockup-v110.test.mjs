@@ -29,3 +29,11 @@ test('v110 matches supplied mockup shell and views',()=>{
   assert.match(css,/\.quo-login-card[\s\S]*var\(--surface\)/);
   assert.match(css,/#quoLoginButton[\s\S]*var\(--accent\)/);
 });
+
+test('legacy supply module cannot rename Payments back to Payment Receipts',()=>{
+  const supply=read('quo-supply-usage-v73.js');
+  assert.doesNotMatch(supply,/setText\('\[data-filter="receipt"\] span:last-child','Payment Receipts'\)/);
+  assert.doesNotMatch(supply,/setText\('#topTitle','Payment Receipts'\)/);
+  assert.match(supply,/setText\('\[data-filter="receipt"\] span:last-child','Payments'\)/);
+  assert.match(supply,/setText\('#topTitle','Payments'\)/);
+});
