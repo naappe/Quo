@@ -39,4 +39,4 @@ function globalEvents(){
  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();S.convertOpen=false}})
 }
 
-globalEvents();loadAll();
+globalEvents();
