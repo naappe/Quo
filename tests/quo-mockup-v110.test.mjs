@@ -8,8 +8,8 @@ test('supplied mockup owns final Quo renderer',()=>{
   const index=read('index.html');
   assert.doesNotMatch(index,/quo-dashboard-v83\.js/);
   assert.doesNotMatch(index,/quo-professional-v108\.js/);
-  assert.match(index,/quo-mockup-v110\.js\?v=110/);
-  assert.ok(index.lastIndexOf('quo-mockup-v110.js')>index.lastIndexOf('quo-theme-v107.js'),'v110 must load after legacy UI modules');
+  assert.match(index,/quo-mockup-v110\.js\?v=111/);
+  assert.ok(index.lastIndexOf('quo-mockup-v110.js')>index.lastIndexOf('quo-theme-v107.js'),'final renderer must load after legacy UI modules');
 });
 
 test('final renderer restores saffron Q after legacy runtime binds',()=>{
@@ -30,10 +30,11 @@ test('v110 matches supplied mockup shell and views',()=>{
   assert.match(css,/#quoLoginButton[\s\S]*var\(--accent\)/);
 });
 
-test('legacy supply module cannot rename Payments back to Payment Receipts',()=>{
-  const supply=read('quo-supply-usage-v73.js');
-  assert.doesNotMatch(supply,/setText\('\[data-filter="receipt"\] span:last-child','Payment Receipts'\)/);
-  assert.doesNotMatch(supply,/setText\('#topTitle','Payment Receipts'\)/);
-  assert.match(supply,/setText\('\[data-filter="receipt"\] span:last-child','Payments'\)/);
-  assert.match(supply,/setText\('#topTitle','Payments'\)/);
+test('final renderer reasserts Payments after legacy render wrappers finish',()=>{
+  const js=read('quo-mockup-v110.js');
+  assert.match(js,/function syncCurrentViewLabels\(\)/);
+  assert.match(js,/S\.view==='documents'&&S\.filter==='receipt'/);
+  assert.match(js,/title\.textContent='Payments'/);
+  assert.match(js,/const previousRender=render/);
+  assert.match(js,/render=function\(\)\{[\s\S]*previousRender\.apply\(this,arguments\)[\s\S]*syncFinalShell\(\)/);
 });
