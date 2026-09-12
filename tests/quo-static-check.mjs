@@ -34,7 +34,7 @@ for(const removed of ['quo-finance-v68.js','quo-finance-nav-v69.js','quo-finance
 if(/credit[_ ]note|debit[_ ]note/i.test(index))fail('Credit/Debit Note UI remains in index.html');else ok('Credit/Debit Note navigation is absent');
 if(index.includes('quo-customer-picker.js'))fail('Superseded customer picker is still loaded');else ok('Old customer picker is removed from runtime');
 
-for(const token of ['Payment Requests','Payment Receipts','Catering Supplies','Request customer payment'])if(!index.includes(token))fail(`Plain-language navigation marker missing: ${token}`);
+for(const token of ['Payment Requests','Payments','Catering Supplies','Request customer payment'])if(!index.includes(token))fail(`Plain-language navigation marker missing: ${token}`);
 if(!process.exitCode)ok('Plain-language navigation is present before JavaScript loads');
 
 const preview=read('quo-preview-v44.js');
