@@ -1,0 +1,211 @@
+/* Quo v110 — final UI contract copied from the approved mockup. */
+:root{
+  --bg:#fafaf9;
+  --surface:#ffffff;
+  --surface-2:#f5f5f4;
+  --border:#e7e5e4;
+  --text:#1c1917;
+  --text-muted:#78716c;
+  --accent:#f59e0b;
+  --accent-hover:#d97706;
+  --accent-soft:#fef3c7;
+  --ok:#16a34a;
+  --warn:#d97706;
+  --bad:#dc2626;
+  --info:#2563eb;
+  --pill-paid-bg:#dcfce7;
+  --pill-paid-fg:#15803d;
+  --pill-part-bg:#fef3c7;
+  --pill-part-fg:#b45309;
+  --pill-unpaid-bg:#fee2e2;
+  --pill-unpaid-fg:#b91c1c;
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-6:24px;
+  --space-8:32px;
+  --radius-s:6px;
+  --radius-m:10px;
+  --radius-pill:999px;
+  --shadow-1:0 1px 2px rgb(0 0 0 / .06);
+  --shadow-2:0 4px 16px rgb(0 0 0 / .08);
+  --sidebar-w:240px;
+  --sidebar-w-icon:64px;
+  --font:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --dur:150ms;
+  --ease:ease-out;
+  --paper:var(--surface);
+  --ink:var(--text);
+  --muted:var(--text-muted);
+  --line:var(--border);
+  --line2:#f0eeec;
+  --brand:var(--accent);
+  --brand-dark:#b45309;
+  --brand-soft:var(--accent-soft);
+  --field-bg:var(--surface);
+  --good:var(--pill-paid-fg);
+  --good-bg:var(--pill-paid-bg);
+  --bad-bg:var(--pill-unpaid-bg);
+}
+
+[data-theme="dark"]{
+  --bg:#1c1917;
+  --surface:#292524;
+  --surface-2:#44403c;
+  --border:#57534e;
+  --text:#fafaf9;
+  --text-muted:#a8a29e;
+  --accent-soft:#451a03;
+  --pill-paid-bg:#052e16;
+  --pill-paid-fg:#4ade80;
+  --pill-part-bg:#451a03;
+  --pill-part-fg:#fbbf24;
+  --pill-unpaid-bg:#450a0a;
+  --pill-unpaid-fg:#f87171;
+  --shadow-1:0 1px 2px rgb(0 0 0 / .3);
+  --shadow-2:0 4px 16px rgb(0 0 0 / .4);
+  --paper:var(--surface);
+  --ink:var(--text);
+  --muted:var(--text-muted);
+  --line:var(--border);
+  --line2:#37322f;
+  --brand:var(--accent);
+  --brand-dark:#fbbf24;
+  --brand-soft:var(--accent-soft);
+  --field-bg:var(--surface);
+  --good:var(--pill-paid-fg);
+  --good-bg:var(--pill-paid-bg);
+  --bad:var(--pill-unpaid-fg);
+  --bad-bg:var(--pill-unpaid-bg);
+  color-scheme:dark;
+}
+
+.quo-v110,.quo-v110 body{margin:0;min-height:100%;font-family:var(--font);font-size:14px;color:var(--text);background:var(--bg);font-variant-numeric:tabular-nums}
+.quo-v110 *{box-sizing:border-box}
+.quo-v110 .app{display:grid;grid-template-columns:var(--sidebar-w) minmax(0,1fr);min-height:100vh;background:var(--bg)}
+.quo-v110 .main-shell{min-width:0;background:var(--bg)}
+
+/* Sidebar — same hierarchy and measurements as the approved mockup. */
+.quo-v110 .sidebar{width:var(--sidebar-w);position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:var(--space-3) var(--space-2);background:var(--surface);border-right:1px solid var(--border);box-shadow:none;z-index:60}
+.quo-v110 .side-brand{display:flex;align-items:center;gap:var(--space-2);padding:var(--space-1) var(--space-2) var(--space-4)}
+.quo-v110 .side-brand .mark{width:22px!important;height:22px!important;min-width:22px;padding:0!important;border:0!important;border-radius:7px!important;display:grid!important;place-items:center!important;background:var(--accent)!important;color:#fff!important;font-family:var(--font)!important;font-size:12px!important;font-weight:700!important;box-shadow:none!important;overflow:hidden}
+.quo-v110 .side-brand .mark img{display:none!important}
+.quo-v110 .side-brand strong{display:block;font-size:15px;line-height:1.1;letter-spacing:0;text-transform:none;color:var(--text)}
+.quo-v110 .side-brand small{display:block;margin-top:2px;font-size:9px;color:var(--text-muted)}
+.quo-v110 .nav{display:flex;flex-direction:column;gap:1px;min-height:0}
+.quo-v110 .nav button{position:relative;width:100%;min-height:36px;padding:7px 10px;border:0;border-radius:var(--radius-s);display:flex;align-items:center;gap:var(--space-2);background:none;color:var(--text-muted);font:inherit;font-size:13px;font-weight:500;text-align:left;transition:background var(--dur) var(--ease),color var(--dur) var(--ease)}
+.quo-v110 .nav button:hover{background:var(--surface-2);color:var(--text)}
+.quo-v110 .nav button.active{background:var(--accent-soft);color:var(--text);font-weight:600}
+.quo-v110 .nav button.active::before{content:"";position:absolute;left:-8px;top:6px;bottom:6px;width:3px;border-radius:3px;background:var(--accent)}
+.quo-v110 .nav-icon{width:18px;display:grid;place-items:center;flex:0 0 18px;font-size:14px;color:currentColor}
+.quo-v110 .nav-sub{padding-left:30px!important;font-size:13px!important}
+.quo-v110 .nav-sub .nav-icon{display:none}
+.quo-v110 .nav-sub.active{color:var(--accent-hover)!important}
+.quo-v110 .nav-spacer{flex:1;min-height:12px}
+.quo-v110 .nav-secondary{font-size:12px!important;color:var(--text-muted)!important}
+.quo-v110 .side-footer{margin-top:auto;padding:10px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted)}
+.quo-v110 .quo-account{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.quo-v110 .quo-account>div{min-width:0;margin-right:auto}.quo-v110 .quo-account b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);font-size:11px}.quo-v110 .quo-account span{display:block;margin-top:2px;font-size:9px;color:var(--text-muted)}
+.quo-v110 .quo-account button{border:0;background:none;color:var(--text-muted);font-size:10px;font-weight:600}
+.quo-v110 .live-pill,.quo-v110 #db-status{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text-muted)}
+.quo-v110 #db-status::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.quo-v110 #db-status[data-state="ok"]{color:var(--ok)}
+.quo-v110 #db-status[data-state="error"]{color:var(--bad)}
+
+/* Main top bar and page spacing. */
+.quo-v110 .topbar{position:relative;top:auto;height:auto;min-height:60px;margin:0;padding:var(--space-6) var(--space-6) var(--space-3);display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);background:transparent;border:0;backdrop-filter:none}
+.quo-v110 .top-title{margin-right:auto}.quo-v110 .top-title .eyebrow{display:none}.quo-v110 .top-title h1{margin:0;font-size:18px;line-height:1.2;font-weight:700;color:var(--text)}
+.quo-v110 .top-actions{display:flex;align-items:center;gap:var(--space-2)}
+.quo-v110 .prepared-by{display:none!important}
+.quo-v110 .content{width:100%;max-width:none;margin:0;padding:0 var(--space-6) var(--space-6);background:transparent}
+
+/* Buttons / toolbar. */
+.quo-v110 .btn,.quo-v110 .icon-btn{border:0;border-radius:var(--radius-s);background:var(--accent);color:#fff;font:inherit;font-weight:600;box-shadow:none;transition:background var(--dur) var(--ease),border-color var(--dur) var(--ease)}
+.quo-v110 .btn{min-height:36px;padding:8px 14px;font-size:13px}.quo-v110 .btn:hover,.quo-v110 .icon-btn:hover{background:var(--accent-hover)}
+.quo-v110 .btn.ghost,.quo-v110 #themeToggle{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.quo-v110 .btn.ghost:hover,.quo-v110 #themeToggle:hover{background:var(--surface-2)}
+.quo-v110 .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.quo-v110 .btn.primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.quo-v110 #themeToggle{min-width:82px}
+.quo-v110 .mock-toolbar{display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-3)}
+.quo-v110 .mock-search{flex:1;max-width:280px;height:36px;padding:7px 12px;border:1px solid var(--border);border-radius:var(--radius-s);background:var(--surface);color:var(--text);outline:0;font:inherit}
+.quo-v110 .mock-search::placeholder{color:var(--text-muted)}
+.quo-v110 .mock-search:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
+.quo-v110 .mock-result-count{margin-left:auto;color:var(--text-muted);font-size:12px}
+
+/* Cards and tables. */
+.quo-v110 .mock-card,.quo-v110 .panel,.quo-v110 .customer-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);box-shadow:var(--shadow-1);overflow:hidden}
+.quo-v110 .mock-table,.quo-v110 .data-table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.quo-v110 .mock-table th,.quo-v110 .data-table th{padding:10px 14px;background:var(--surface-2);border-bottom:1px solid var(--border);color:var(--text-muted);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;text-align:left}
+.quo-v110 .mock-table td,.quo-v110 .data-table td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--text);font-size:13px;vertical-align:middle}
+.quo-v110 .mock-table tbody tr:last-child td,.quo-v110 .data-table tbody tr:last-child td{border-bottom:0}
+.quo-v110 .mock-table tbody tr,.quo-v110 .data-table tbody tr{cursor:pointer;transition:background var(--dur) var(--ease)}
+.quo-v110 .mock-table tbody tr:hover,.quo-v110 .data-table tbody tr:hover{background:var(--surface-2)}
+.quo-v110 .mock-table tbody tr.selected,.quo-v110 .data-table tbody tr.selected{background:var(--accent-soft)}
+.quo-v110 th.r,.quo-v110 td.r,.quo-v110 th.num,.quo-v110 td.num{text-align:right}
+.quo-v110 td.num{font-weight:600}.quo-v110 .mut,.quo-v110 .subline{color:var(--text-muted);font-size:11px}.quo-v110 .subline{display:block;margin-top:2px}
+
+/* Status pills — supplied mockup colours. */
+.quo-v110 .pill,.quo-v110 .badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:var(--radius-pill);font-size:11px;font-weight:600;border:0;background:var(--surface-2);color:var(--text-muted)}
+.quo-v110 .pill.paid,.quo-v110 .badge.paid,.quo-v110 .badge.issued,.quo-v110 .badge.confirmed,.quo-v110 .badge.final{background:var(--pill-paid-bg);color:var(--pill-paid-fg)}
+.quo-v110 .pill.part-paid,.quo-v110 .badge.part-paid,.quo-v110 .badge.awaiting-payment,.quo-v110 .badge.sent{background:var(--pill-part-bg);color:var(--pill-part-fg)}
+.quo-v110 .pill.unpaid,.quo-v110 .badge.unpaid,.quo-v110 .badge.overdue,.quo-v110 .badge.cancelled{background:var(--pill-unpaid-bg);color:var(--pill-unpaid-fg)}
+
+/* Dashboard mockup. */
+.quo-v110 .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--space-3);margin-bottom:var(--space-4)}
+.quo-v110 .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);padding:var(--space-4)}
+.quo-v110 .stat .v{font-size:20px;font-weight:700;color:var(--text)}
+.quo-v110 .stat .v.ok{color:var(--ok)}
+.quo-v110 .stat .l{margin-top:2px;font-size:12px;color:var(--text-muted)}
+.quo-v110 .mock-section-note{margin-top:12px;color:var(--text-muted);font-size:12px}
+
+/* Forms + editor remain functional but visually use the same token system. */
+.quo-v110 .field label{display:block;margin-bottom:4px;color:var(--text-muted);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.quo-v110 .field input,.quo-v110 .field select,.quo-v110 .field textarea{width:100%;background:var(--surface)!important;border:1px solid var(--border)!important;border-radius:var(--radius-s)!important;color:var(--text)!important}
+.quo-v110 .field input:focus,.quo-v110 .field select:focus,.quo-v110 .field textarea:focus{outline:2px solid var(--accent)!important;outline-offset:-1px!important;border-color:transparent!important;box-shadow:none!important}
+.quo-v110 .editor-card,.quo-v110 .preview-card,.quo-v110 .modal-card{background:var(--surface)!important;border-color:var(--border)!important;border-radius:var(--radius-m)!important;color:var(--text)!important}
+
+/* Authentication screen — no legacy purple/teal styling. */
+.quo-v110 .quo-auth-gate{background:var(--bg)!important;padding:20px}
+.quo-v110 .quo-login-card{width:min(390px,100%);padding:28px;background:var(--surface)!important;border:1px solid var(--border)!important;border-radius:var(--radius-m)!important;box-shadow:var(--shadow-2)!important;color:var(--text)!important}
+.quo-v110 .quo-login-brand{display:flex;align-items:center;gap:var(--space-2)}
+.quo-v110 .quo-login-mark{width:22px!important;height:22px!important;border:0!important;border-radius:7px!important;display:grid!important;place-items:center!important;background:var(--accent)!important;color:#fff!important;font-family:var(--font)!important;font-size:12px!important;font-weight:700!important}
+.quo-v110 .quo-login-brand b{display:block;letter-spacing:0!important;font-size:15px!important;text-transform:none;color:var(--text)}
+.quo-v110 .quo-login-brand span{margin-top:2px!important;color:var(--text-muted)!important;font-size:9px!important}
+.quo-v110 .quo-login-copy{margin:28px 0 18px}.quo-v110 .quo-login-copy h1{margin:0;color:var(--text);font-size:24px}.quo-v110 .quo-login-copy p{margin:6px 0 0;color:var(--text-muted)!important;font-size:11px}
+.quo-v110 .quo-login-card label{color:var(--text-muted)!important;font-size:10px!important}.quo-v110 .quo-login-card input{height:44px;background:var(--surface)!important;border:1px solid var(--border)!important;border-radius:var(--radius-s)!important;color:var(--text)!important}
+.quo-v110 .quo-login-card input:focus{border-color:var(--accent)!important;box-shadow:0 0 0 3px rgb(245 158 11 / .14)!important}
+.quo-v110 #quoLoginButton{height:44px;background:var(--accent)!important;border:0!important;color:#fff!important;border-radius:var(--radius-s)!important;font-weight:600!important}
+.quo-v110 #quoLoginButton:hover{background:var(--accent-hover)!important}
+
+@media (max-width: 1024px){
+  .quo-v110 .app{grid-template-columns:var(--sidebar-w-icon) minmax(0,1fr)}
+  .quo-v110 .sidebar{width:var(--sidebar-w-icon)}
+  .quo-v110 .side-brand>div:last-child,.quo-v110 .nav .nav-text,.quo-v110 .side-footer{display:none}
+  .quo-v110 .side-brand{justify-content:center;padding-inline:0}
+  .quo-v110 .nav button{justify-content:center;padding-inline:0}
+  .quo-v110 .nav-sub{display:none!important}
+}
+
+@media (max-width: 768px){
+  .quo-v110 .app{display:block;padding-bottom:66px}
+  .quo-v110 .sidebar{position:fixed;z-index:900;left:0;right:0;bottom:0;top:auto;width:100%;height:60px;padding:var(--space-1);display:block;border-right:0;border-top:1px solid var(--border);background:var(--surface);transform:none!important;box-shadow:none}
+  .quo-v110 .side-brand,.quo-v110 .side-footer,.quo-v110 .nav-sub,.quo-v110 .nav-secondary,.quo-v110 .nav-spacer{display:none!important}
+  .quo-v110 .nav{height:100%;display:grid;grid-template-columns:repeat(4,1fr);gap:2px}
+  .quo-v110 .nav button.nav-main{min-width:0;height:52px;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:3px 2px;font-size:10px}
+  .quo-v110 .nav button.nav-main::before{display:none}
+  .quo-v110 .nav button.nav-main .nav-text{display:block!important;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .quo-v110 .nav button.nav-main .nav-icon{display:grid!important;width:auto;font-size:15px}
+  .quo-v110 .topbar{padding:var(--space-3) var(--space-3) var(--space-2);min-height:56px}
+  .quo-v110 .content{padding:0 var(--space-3) var(--space-4)}
+  .quo-v110 .top-actions{gap:5px}.quo-v110 #themeToggle{min-width:38px;width:38px;padding:0}.quo-v110 #themeToggle .theme-label{display:none}.quo-v110 .top-actions .btn.primary{font-size:11px;padding-inline:10px}
+  .quo-v110 .mock-toolbar{align-items:stretch;flex-wrap:wrap}.quo-v110 .mock-search{max-width:none;width:100%}.quo-v110 .mock-result-count{width:100%;margin-left:0}
+  .quo-v110 .stat-grid{grid-template-columns:1fr}
+  .quo-v110 .mock-card,.quo-v110 .panel{overflow:auto}
+  .quo-v110 .mock-table,.quo-v110 .data-table{min-width:650px}
+}
+
+@media print{
+  .quo-v110 .sidebar,.quo-v110 .topbar,.quo-v110 #themeToggle{display:none!important}
+  .quo-v110 .app{display:block}
+}
