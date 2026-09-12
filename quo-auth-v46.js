@@ -46,6 +46,7 @@
   }
 
   function showLogin(message=''){
+    setConnectionStatus('unknown');
     const gate=ensureGate();
     gate.classList.remove('hidden');
     document.getElementById('app')?.setAttribute('aria-hidden','true');
@@ -117,7 +118,8 @@
 
   function installAccountFooter(){
     const foot=document.querySelector('.side-footer');if(!foot||!S.authUser)return;
-    foot.innerHTML=`<div class="quo-account"><div><b>${esc(actorName())}</b><span>${isAdmin()?'Administrator':'Staff'}</span></div><button type="button" data-quo-logout>Sign out</button></div><div class="live-pill"><i></i> Supabase connected</div>`;
+    foot.innerHTML=`<div class="quo-account"><div><b>${esc(actorName())}</b><span>${isAdmin()?'Administrator':'Staff'}</span></div><button type="button" data-quo-logout>Sign out</button></div><div class="live-pill"><span id="db-status" data-state="unknown" role="status" aria-live="polite">Checking connection…</span></div>`;
+    renderConnectionStatus();
     foot.querySelector('[data-quo-logout]').onclick=logout;
   }
 

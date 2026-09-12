@@ -14,6 +14,21 @@ const CFG={quotation:{label:'Quotation',plural:'Quotations',short:'QT',due:'Vali
 const FIXED={bank:'Bank of Maldives (BML)',account:'7730000796560',viber:'7667734',hotline:'9990453'};
 const defaultSettings={company_name:"Cafe' White Saffron",address:'Villimale, Maldives',phone:FIXED.hotline,email:'whitesaffron2025@gmail.com',bank:FIXED.bank,account_name:"Cafe' White Saffron",account_number:FIXED.account,viber:FIXED.viber,currency:'MVR',default_validity_days:7,quotation_terms:'',invoice_terms:'',footer:"Cafe' White Saffron - Hotline 9990453"};
 const S={view:'dashboard',filter:'all',docs:[],current:null,settings:{...defaultSettings},preparedBy:localStorage.getItem('quo_prepared_by')||'',search:'',loading:true,convertOpen:false};
+// Connection status describes the last completed application data check.
+S.connection={state:'unknown',message:'Checking connection…'};
+function renderConnectionStatus(){
+  const el=document.getElementById('db-status');
+  if(!el)return;
+  el.dataset.state=S.connection.state;
+  el.textContent=S.connection.message;
+}
+function setConnectionStatus(state){
+  const messages={unknown:'Checking connection…',ok:'Supabase connected',error:'Connection failed — retry or sign in'};
+  S.connection={state,message:messages[state]||messages.unknown};
+  renderConnectionStatus();
+}
+window.addEventListener('offline',()=>setConnectionStatus('error'));
+window.addEventListener('online',()=>setConnectionStatus('unknown'));
 function calc(d){const raw=(d.items||[]).reduce((a,i)=>a+num(i.qty)*num(i.price),0);const discount=Math.min(num(d.discount),raw),base=raw-discount,rate=num(d.gst_rate),mode=d.gst_mode||'none';let gst=0,net=base,total=base;if(mode==='exclusive'){gst=base*rate/100;total=base+gst}if(mode==='inclusive'&&rate){gst=base-base/(1+rate/100);net=base-gst;total=base}return{raw,discount,base,gst,net,total,paid:num(d.paid_amount),balance:Math.max(total-num(d.paid_amount),0)}}
 function statusClass(v){return String(v||'draft').toLowerCase().replaceAll(' ','-')}
 function period(a,b){if(!a)return'';if(!b||a===b)return dateLong(a);const x=new Date(a+'T00:00:00'),y=new Date(b+'T00:00:00');if(x.getMonth()===y.getMonth()&&x.getFullYear()===y.getFullYear())return `${x.getDate()}-${y.getDate()} ${x.toLocaleDateString('en-GB',{month:'long'})} ${x.getFullYear()}`;return `${dateLong(a)} - ${dateLong(b)}`}

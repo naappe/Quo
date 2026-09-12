@@ -138,17 +138,38 @@
     }
     return out;
   }
+  // Ignore stale requests after logout or a newer check.
+  let connectionCheck=0;
   refreshDocs=async function(){
-    try{S.docs=await fetchAllActive();return {data:S.docs,error:null}}catch(error){console.error(error);return {data:null,error}}
+    if(!S.authUser)return {data:null,error:null};
+    const check=++connectionCheck,user=S.authUser;
+    setConnectionStatus('unknown');
+    try{
+      const docs=await fetchAllActive();
+      if(check===connectionCheck&&S.authUser===user){S.docs=docs;setConnectionStatus('ok')}
+      return {data:docs,error:null};
+    }catch(error){
+      if(check===connectionCheck&&S.authUser===user)setConnectionStatus('error');
+      console.error(error);return {data:null,error};
+    }
   };
   loadAll=async function(){
-    S.loading=true;render();
+    if(!S.authUser){setConnectionStatus('unknown');return;}
+    const check=++connectionCheck,user=S.authUser;
+    S.loading=true;setConnectionStatus('unknown');render();
     try{
       const [docs,sr]=await Promise.all([fetchAllActive(),sb.from('quo_settings').select('*').eq('id',1).maybeSingle()]);
+      if(check!==connectionCheck||S.authUser!==user)return;
       S.docs=docs;
-      if(!sr.error&&sr.data)S.settings={...defaultSettings,...sr.data,bank:FIXED.bank,account_number:FIXED.account,viber:FIXED.viber,phone:FIXED.hotline};
-    }catch(e){console.error(e);toast('Could not load documents')}
-    S.loading=false;render();
+      if(sr.error)throw sr.error;
+      if(sr.data)S.settings={...defaultSettings,...sr.data,bank:FIXED.bank,account_number:FIXED.account,viber:FIXED.viber,phone:FIXED.hotline};
+      setConnectionStatus('ok');
+    }catch(e){
+      if(check===connectionCheck&&S.authUser===user){setConnectionStatus('error');toast('Could not load application data')}
+      console.error(e);
+    }finally{
+      if(S.authUser===user){S.loading=false;render()}
+    }
   };
 
   /* New documents start on the correct Maldives business date. */
