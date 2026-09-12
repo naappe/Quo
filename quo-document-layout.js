@@ -147,7 +147,7 @@
       <div class="q26-client">
         <div class="q26-eyebrow">Prepared For</div>
         <h2>${esc(d.customer_name||'Customer')}</h2>
-        <div class="q26-client-meta">${contactRow('Contact',d.customer_phone)}${contactRow('Address',d.customer_address)}</div>
+        <div class="q26-client-meta">${contactRow('GST Number',String(d.customer_gst_number||'').trim())}${contactRow('Contact',d.customer_phone)}${contactRow('Address',d.customer_address)}</div>
       </div>
       <div class="q26-details">
         <div class="q26-details-head"><div class="q26-eyebrow">Document Details</div><div class="q43-detail-badges"><span class="q26-info-status">${esc(d.status||'Draft')}</span>${paymentBadge(d,c)}</div></div>

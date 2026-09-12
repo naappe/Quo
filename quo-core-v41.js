@@ -46,6 +46,7 @@
       creation_date:d.creation_date||null,
       expires_on:d.expires_on||null,
       customer_name:d.customer_name||null,
+      customer_gst_number:String(d.customer_gst_number||'').trim()||null,
       customer_phone:d.customer_phone||null,
       customer_address:d.customer_address||null,
       event_name:d.event_name||null,

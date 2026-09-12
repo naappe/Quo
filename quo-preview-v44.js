@@ -14,7 +14,7 @@
     try{
       return JSON.stringify([
         d.document_number,d.document_type,d.status,d.currency,d.creation_date,d.expires_on,
-        d.customer_name,d.customer_phone,d.customer_address,d.event_name,d.service_enabled,d.service_type,
+        d.customer_name,d.customer_gst_number,d.customer_phone,d.customer_address,d.event_name,d.service_enabled,d.service_type,
         d.service_from,d.service_to,d.service_pax,d.venue,d.items,d.gst_mode,d.gst_rate,d.discount,d.show_gst,
         d.include_menu,d.menu_title,d.menu_text,d.use_advance,d.advance_percent,d.advance_due,d.paid_amount,
         d.payment_reference,d.extra_terms,d.source_document_id,
