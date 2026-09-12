@@ -1,4 +1,4 @@
-/* Quo v110 — final renderer for the approved warm-neutral / saffron mockup. */
+/* Quo v111 — final renderer for the approved warm-neutral / saffron mockup. */
 (function(){
   const EPS=.005;
   document.documentElement.classList.add('quo-v110');
@@ -186,20 +186,37 @@
     else btn.textContent='+ New Document';
   }
 
-  const previousBind=bindDynamic;
-  bindDynamic=function(){
-    const result=previousBind.apply(this,arguments);
+  function syncCurrentViewLabels(){
+    if(S.view==='documents'&&S.filter==='receipt'){
+      const title=document.getElementById('topTitle');if(title)title.textContent='Payments';
+    }
+  }
+
+  function syncFinalShell(){
     arrangeNavigation();
     syncBrand();
     syncLogin();
     syncTopAction();
+    syncCurrentViewLabels();
+  }
+
+  const previousBind=bindDynamic;
+  bindDynamic=function(){
+    const result=previousBind.apply(this,arguments);
+    syncFinalShell();
     return result;
   };
 
-  arrangeNavigation();
-  syncBrand();
-  syncLogin();
-  syncTopAction();
+  /* Some legacy modules wrap render() and change labels after bindDynamic() returns.
+     Keep this wrapper outermost so the approved v110 shell always wins last. */
+  const previousRender=render;
+  render=function(){
+    const result=previousRender.apply(this,arguments);
+    syncFinalShell();
+    return result;
+  };
+
+  syncFinalShell();
   setTimeout(syncLogin,0);
   setTimeout(syncLogin,250);
 
