@@ -19,4 +19,6 @@ jobs:
         with:
           node-version: 22
       - name: Run Quo checks
-        run: node tests/quo-static-check.mjs
+        run: |
+          node tests/quo-static-check.mjs
+          node --test tests/*.test.mjs

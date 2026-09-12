@@ -17,9 +17,7 @@
 
   function paymentState(d){
     const c=calc(d);
-    if(c.balance<=EPS) return 'Paid';
-    if(c.paid>EPS) return 'Part Paid';
-    return 'Unpaid';
+    return paymentStatusFromTotals(c.total,c.paid,c.balance);
   }
 
   function latestPayment(d){
