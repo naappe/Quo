@@ -49,7 +49,9 @@
     setConnectionStatus('unknown');
     const gate=ensureGate();
     gate.classList.remove('hidden');
-    document.getElementById('app')?.setAttribute('aria-hidden','true');
+    const app=document.getElementById('app');
+    app?.setAttribute('aria-hidden','true');
+    app?.removeAttribute('aria-busy');
     const err=gate.querySelector('#quoLoginError');
     if(message){err.textContent=message;err.classList.remove('hidden')}else{err.textContent='';err.classList.add('hidden')}
     setTimeout(()=>gate.querySelector('#quoLoginId')?.focus(),30);
@@ -57,6 +59,15 @@
   function hideLogin(){
     ensureGate().classList.add('hidden');
     document.getElementById('app')?.removeAttribute('aria-hidden');
+  }
+  function showRestoring(){
+    setConnectionStatus('unknown');
+    ensureGate().classList.add('hidden');
+    const app=document.getElementById('app');
+    app?.removeAttribute('aria-hidden');
+    app?.setAttribute('aria-busy','true');
+    S.loading=true;
+    try{render()}catch(e){}
   }
 
   async function login(e){
@@ -92,22 +103,28 @@
     const role=await roleFor(user);if(!role)return false;
     S.authUser=user;S.role=role.role;S.displayName=role.display_name||role.username||user.email||'User';
     try{prepared=function(){S.preparedBy=actorName();return S.preparedBy}}catch(e){}
+    const app=document.getElementById('app');
+    app?.setAttribute('aria-busy','true');
     hideLogin();applyPermissions();installAccountFooter();
     S.loading=true;render();
     await loadAll();
+    app?.removeAttribute('aria-busy');
     applyPermissions();installAccountFooter();
     return true;
   }
 
-  async function restoreLogin(){
-    const stored=storedSession();
-    if(!stored?.access_token||!stored?.refresh_token){showLogin();return;}
+  async function restoreLogin(stored=storedSession()){
+    if(!stored?.access_token||!stored?.refresh_token){showLogin();return false;}
     try{
       const r=await sb.auth.setSession(stored);
       if(r.error||!r.data.session)throw r.error||new Error('Session expired');
       saveSession(r.data.session);
       if(!await activateSession(r.data.session))throw new Error('Account inactive');
-    }catch(e){await sb.auth.signOut().catch(()=>{});saveSession(null);showLogin('Please sign in again.');}
+      return true;
+    }catch(e){
+      document.getElementById('app')?.removeAttribute('aria-busy');
+      await sb.auth.signOut().catch(()=>{});saveSession(null);showLogin('Please sign in again.');return false;
+    }
   }
 
   async function logout(){
@@ -241,7 +258,10 @@
   }
 
   window.quoAuthBoot=async function(){
-    if(booted)return;booted=true;ensureGate();showLogin();await restoreLogin();
+    if(booted)return;booted=true;ensureGate();
+    const stored=storedSession();
+    if(stored?.access_token&&stored?.refresh_token){showRestoring();await restoreLogin(stored)}
+    else showLogin();
   };
   window.quoAuthBoot();
 })();
