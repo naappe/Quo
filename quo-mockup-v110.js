@@ -29,6 +29,7 @@
   function stateFor(d){
     const c=calc(d);
     if(d.document_type==='receipt')return {text:d.status==='Cancelled'?'Cancelled':'Paid',cls:d.status==='Cancelled'?'unpaid':'paid'};
+    if(d.document_type==='proforma'&&d.status==='Converted')return {text:'Converted',cls:'paid'};
     if(['invoice','proforma'].includes(d.document_type)){
       if(c.total>0&&c.balance<=EPS)return {text:'Paid',cls:'paid'};
       if(c.paid>EPS&&c.balance>EPS)return {text:'Part Paid',cls:'part-paid'};
@@ -61,7 +62,7 @@
       const key=String(d.customer_name||'').trim().toLowerCase();
       if(!key)continue;
       const old=map.get(key)||{name:d.customer_name,gst:'',outstanding:0,last:''};
-      if(['invoice','proforma'].includes(d.document_type))old.outstanding+=balanceOf(d);
+      if(d.document_type==='invoice'||(d.document_type==='proforma'&&d.status!=='Converted'))old.outstanding+=balanceOf(d);
       const stamp=String(d.updated_at||d.created_at||'');
       if(stamp>=old.last){old.last=stamp;old.name=d.customer_name||old.name;old.gst=d.customer_gst_number||old.gst}
       else old.gst=old.gst||d.customer_gst_number||'';
