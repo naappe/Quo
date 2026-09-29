@@ -89,8 +89,8 @@
 /* Sidebar — same hierarchy and measurements as the approved mockup. */
 .quo-v110 .sidebar{width:var(--sidebar-w);position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:var(--space-3) var(--space-2);background:var(--surface);border-right:1px solid var(--border);box-shadow:none;z-index:60}
 .quo-v110 .side-brand{display:flex;align-items:center;gap:var(--space-2);padding:var(--space-1) var(--space-2) var(--space-4)}
-.quo-v110 .side-brand .mark{width:22px!important;height:22px!important;min-width:22px;padding:0!important;border:0!important;border-radius:7px!important;display:grid!important;place-items:center!important;background:var(--accent)!important;color:#fff!important;font-family:var(--font)!important;font-size:12px!important;font-weight:700!important;box-shadow:none!important;overflow:hidden}
-.quo-v110 .side-brand .mark img{display:none!important}
+.quo-v110 .side-brand .mark{width:34px!important;height:34px!important;min-width:34px;padding:0!important;border:0!important;border-radius:0!important;display:grid!important;place-items:center!important;background:transparent!important;color:inherit!important;box-shadow:none!important;overflow:visible}
+.quo-v110 .side-brand .mark img{display:block!important;width:34px!important;height:34px!important;object-fit:contain}
 .quo-v110 .side-brand strong{display:block;font-size:15px;line-height:1.1;letter-spacing:0;text-transform:none;color:var(--text)}
 .quo-v110 .side-brand small{display:block;margin-top:2px;font-size:9px;color:var(--text-muted)}
 .quo-v110 .nav{display:flex;flex-direction:column;gap:1px;min-height:0}
