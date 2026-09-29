@@ -209,3 +209,10 @@
   .quo-v110 .sidebar,.quo-v110 .topbar,.quo-v110 #themeToggle{display:none!important}
   .quo-v110 .app{display:block}
 }
+
+/* White Saffron brand polish */
+.quo-v110 .side-brand{align-items:center!important;gap:10px!important;padding-top:8px!important;padding-bottom:18px!important}
+.quo-v110 .side-brand .mark{width:52px!important;height:52px!important;min-width:52px!important}
+.quo-v110 .side-brand .mark img{width:52px!important;height:52px!important;object-fit:contain!important}
+.quo-v110 .side-brand strong{font-size:14px!important;line-height:1.05!important;max-width:140px}
+.quo-v110 .side-brand .top-credit{font-size:8.5px!important;margin-top:4px!important}
