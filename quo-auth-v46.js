@@ -135,8 +135,7 @@
 
   function installAccountFooter(){
     const foot=document.querySelector('.side-footer');if(!foot||!S.authUser)return;
-    foot.innerHTML=`<div class="quo-account"><div><b>${esc(actorName())}</b><span>${isAdmin()?'Administrator':'Staff'}</span></div><button type="button" data-quo-logout>Sign out</button></div><div class="live-pill"><span id="db-status" data-state="unknown" role="status" aria-live="polite">Checking connection…</span></div>`;
-    renderConnectionStatus();
+    foot.innerHTML=`<div class="quo-account"><div><b>${esc(actorName())}</b><span>${isAdmin()?'Administrator':'Staff'}</span></div><button type="button" data-quo-logout>Sign out</button></div><small class="app-credit">Created by Naappe</small>`;
     foot.querySelector('[data-quo-logout]').onclick=logout;
   }
 
