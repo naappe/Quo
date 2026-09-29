@@ -164,7 +164,6 @@
     if($('#topTitle'))$('#topTitle').textContent='Catering Supplies';
     setActiveNav();
     $('#view').innerHTML=`
-      <div class="page-head quo-supply-page-head"><div><div class="eyebrow">WHITE SAFFRON · INTERNAL</div><h2>Catering Supplies</h2><p>Select the catering invoice and record what was bought for that job.</p></div></div>
       <section class="panel quo-simple-supply-entry">
         <div class="panel-head"><div><h3>Add Supplies</h3><p>Use the Final Invoice when available. If there is no invoice yet, the quotation can be used temporarily.</p></div><span class="badge final">ADMIN ONLY</span></div>
         <form id="quoSupplyUsageForm" class="quo-simple-supply-form">
