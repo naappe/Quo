@@ -31,7 +31,7 @@
     gate.id='quoAuthGate';
     gate.className='quo-auth-gate hidden';
     gate.innerHTML=`<div class="quo-login-card">
-      <div class="quo-login-brand"><div class="quo-login-mark">WS</div><div><b>QUO</b><span>White Saffron Documents</span></div></div>
+      <div class="quo-login-brand"><div class="quo-login-mark">WS</div><div><b>WHITE SAFFRON DOCUMENTS</b><span>Quotations · Proforma · Invoices · Payments</span></div></div>
       <div class="quo-login-copy"><h1>Sign in</h1><p>Use the main admin email or a staff username.</p></div>
       <form id="quoLoginForm">
         <label>EMAIL OR USERNAME<input id="quoLoginId" autocomplete="username" required placeholder="naappe@gmail.com or username"></label>
