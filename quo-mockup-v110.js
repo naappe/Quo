@@ -168,13 +168,25 @@
 
   function syncBrand(){
     const mark=document.querySelector('.side-brand .mark');
-    if(mark){mark.textContent='Q';mark.removeAttribute('style')}
-    const strong=document.querySelector('.side-brand strong');if(strong)strong.textContent='Quo';
+    if(mark){
+      mark.innerHTML='<img src="./assets/white-saffron-logo.png" alt="White Saffron logo">';
+      mark.removeAttribute('style');
+    }
+    const strong=document.querySelector('.side-brand strong');
+    if(strong)strong.textContent='White Saffron Documents';
+    const wrap=document.querySelector('.side-brand>div:last-child');
+    if(wrap){
+      wrap.querySelectorAll('small').forEach(x=>x.remove());
+      const credit=document.createElement('small');
+      credit.className='app-credit top-credit';
+      credit.textContent='Created by Naappe';
+      wrap.appendChild(credit);
+    }
   }
 
   function syncLogin(){
-    const mark=document.querySelector('.quo-login-mark');if(mark)mark.textContent='Q';
-    const brand=document.querySelector('.quo-login-brand b');if(brand)brand.textContent='Quo';
+    const mark=document.querySelector('.quo-login-mark');if(mark)mark.textContent='WS';
+    const brand=document.querySelector('.quo-login-brand b');if(brand)brand.textContent='WHITE SAFFRON DOCUMENTS';
   }
 
   function syncTopAction(){
