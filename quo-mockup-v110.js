@@ -169,7 +169,7 @@
   function syncBrand(){
     const mark=document.querySelector('.side-brand .mark');
     if(mark){
-      mark.innerHTML='<img src="./assets/white-saffron-logo.png" alt="White Saffron logo">';
+      mark.innerHTML='<img src="./assets/white-saffron-logo.svg" alt="White Saffron logo">';
       mark.removeAttribute('style');
     }
     const strong=document.querySelector('.side-brand strong');
