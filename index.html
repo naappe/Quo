@@ -4,10 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#fafaf9">
+<!-- 0. Critical pre-paint state: apply the saved theme before CSS paints the UI. -->
 <script>try{const t=localStorage.getItem('quo-theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(_){}</script>
 <title>White Saffron Documents</title>
 <link rel="icon" type="image/svg+xml" href="/Quo/favicon.svg?v=2">
 <link rel="shortcut icon" type="image/svg+xml" href="/Quo/favicon.svg?v=2">
+<!-- 1. CSS: base layout → document/PDF → editor → theme → mobile → final approved visual override. -->
 <link rel="stylesheet" href="./quo-app.css?v=refactor-status">
 <link rel="stylesheet" href="./quo-doc.css?v=4">
 <link rel="stylesheet" href="./quo-pdf-polish.css?v=61">
@@ -67,17 +69,31 @@
 </div>
 <div id="toast" class="toast hidden" aria-live="polite"></div>
 <div id="printRoot" class="print-root"></div>
+<!--
+  JavaScript execution sequence
+  2. Vendor libraries
+  3. Domain/core/data primitives
+  4. Editor + base UI
+  5. Document/commercial workflows
+  6. Authentication + production safeguards
+  7. Feature patches/enhancements
+  8. Final approved renderer/theme patch (must remain last)
+-->
+<!-- 2. Vendor libraries -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<!-- 3. Domain, stability preload, core state and data -->
 <script src="./quo-domain.js?v=1"></script>
 <script src="./quo-stability-preload-v93.js?v=93"></script>
 <script src="./quo-base.js?v=refactor-status"></script>
 <script src="./quo-data.js?v=refactor-gst"></script>
+<!-- 4. Editor and base UI. Mobile itemEditor intentionally loads before the editor that consumes it. -->
 <script src="./quo-editor-mobile-v109.js?v=109"></script>
 <script src="./quo-editor.js?v=refactor-gst"></script>
 <script src="./quo-patch.js?v=5"></script>
 <script src="./quo-ui.js?v=111"></script>
+<!-- 5. Numbering, safety, sales, documents, preview, conversions and payments -->
 <script src="./quo-numbering.js?v=12"></script>
 <script src="./quo-safety.js?v=8"></script>
 <script src="./quo-sales.js?v=45"></script>
@@ -95,12 +111,14 @@
 <script src="./quo-core-v41.js?v=refactor-status"></script>
 <script src="./quo-final-v42.js?v=60"></script>
 <script src="./quo-master-v44.js?v=58"></script>
+<!-- 6. Authentication, login, production/PDF safeguards -->
 <script src="./quo-auth-v46.js?v=111"></script>
 <script src="./quo-login-clean-v53.js?v=54"></script>
 <script src="./quo-pdf-pagination-v64.js?v=64"></script>
 <script src="./quo-production-v64.js?v=64"></script>
 <script src="./quo-final-audit-v65.js?v=65"></script>
 <script src="./quo-amendments-v66.js?v=66"></script>
+<!-- 7. Feature modules and controlled runtime patches -->
 <script src="./quo-dashboard-graph-v67.js?v=67"></script>
 <script src="./quo-supply-usage-v73.js?v=77"></script>
 <script src="./quo-pax-consistency-v78.js?v=85"></script>
@@ -122,6 +140,7 @@
 <script src="./quo-quote-requests-v104.js?v=104"></script>
 <script src="./quo-rfq-alert-v105.js?v=105"></script>
 <script src="./quo-rfq-clickfix-v106.js?v=106"></script>
+<!-- 8. Final visual layer. Keep these last so the approved White Saffron UI wins over legacy wrappers. -->
 <script src="./quo-theme-v107.js?v=107"></script>
 <script src="./quo-mockup-v110.js?v=111"></script>
 </body>
