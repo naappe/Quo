@@ -9,7 +9,7 @@
     link=document.createElement('link');
     link.id='quoMockupV110Css';
     link.rel='stylesheet';
-    link.href='./quo-mockup-v110.css?v=110';
+    link.href='./quo-mockup-v110.css?v=114';
     document.head.appendChild(link);
   }
   ensureFinalCss();
