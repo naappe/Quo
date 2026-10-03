@@ -25,7 +25,7 @@ test('v110 matches supplied mockup shell and views',()=>{
   const js=read('quo-mockup-v110.js');
   const css=read('quo-mockup-v110.css');
   for(const token of ['Dashboard','Documents','Quotations','Payment Requests','Invoices','Customers','Payments']) assert.match(js,new RegExp(token));
-  for(const token of ['--sidebar-w:240px','--accent:#f59e0b','--accent-soft:#fef3c7','--bg:#fafaf9','@media (max-width: 768px)']) assert.ok(css.includes(token),`missing ${token}`);
+  for(const token of ['--sidebar-w:240px','--accent:#f59a1b','--coral:#e8553d','--info:#0e8f8a','--palm:#12372f','--bg:#fff8ee','@media (max-width: 768px)']) assert.ok(css.includes(token),`missing ${token}`);
   assert.match(css,/\.quo-login-card[\s\S]*var\(--surface\)/);
   assert.match(css,/#quoLoginButton[\s\S]*var\(--accent\)/);
 });
