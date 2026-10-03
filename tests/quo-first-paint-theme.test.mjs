@@ -16,7 +16,7 @@ test('approved v110 theme is active before first paint',()=>{
 
 
 test('final White Saffron semantic theme loads after legacy and mockup CSS',()=>{
-  const finalTheme=index.indexOf('white-saffron-theme.css?v=1');
+  const finalTheme=index.indexOf('white-saffron-theme.css?v=2');
   const mockup=index.indexOf('quo-mockup-v110.css?v=114');
   const headEnd=index.indexOf('</head>');
   assert.ok(finalTheme>=0,'final White Saffron theme must be linked in index.html');
