@@ -334,3 +334,50 @@ a, .link { color: var(--info-text); }
   a { color: var(--text); text-decoration: none; }
   table th, table td { border-color: var(--border); }
 }
+
+
+/* ---------- Layer 5: editor action bar role mapping ---------- */
+/* Runtime legacy CSS injects a dark .editor-actions .btn.primary rule after
+   static stylesheets. These selectors intentionally outrank it so the editor
+   always follows the semantic action roles. */
+.quo-v110 .editor-actions [data-save].btn.primary {
+  background: var(--action-bg) !important;
+  color: var(--action-text) !important;
+  border-color: var(--action-bg) !important;
+}
+.quo-v110 .editor-actions [data-save].btn.primary:hover {
+  background: var(--action-bg-hover) !important;
+  border-color: var(--action-bg-hover) !important;
+}
+
+.quo-v110 .editor-actions [data-full-preview].btn,
+.quo-v110 .editor-actions > .btn:not(.primary):not(.danger) {
+  background: var(--surface) !important;
+  color: var(--info-text) !important;
+  border: 0.5px solid var(--border-input) !important;
+}
+
+.quo-v110 .editor-actions .editor-more > summary {
+  background: var(--surface) !important;
+  color: var(--text-body-soft) !important;
+  border: 0.5px solid var(--border-input) !important;
+}
+
+.quo-v110 .editor-actions .editor-more-menu .btn {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: transparent !important;
+}
+
+.quo-v110 .editor-actions .btn.danger,
+.quo-v110 .editor-actions [data-delete-current],
+.quo-v110 .editor-actions [data-q66-void] {
+  background: var(--surface) !important;
+  color: var(--danger-text) !important;
+  border: 0.5px solid var(--danger-border) !important;
+}
+.quo-v110 .editor-actions .btn.danger:hover,
+.quo-v110 .editor-actions [data-delete-current]:hover,
+.quo-v110 .editor-actions [data-q66-void]:hover {
+  background: var(--danger-bg) !important;
+}
