@@ -17,7 +17,7 @@
   function setTheme(theme,persist){
     const next=theme==='dark'?'dark':'light';
     root.setAttribute('data-theme',next);
-    if(meta)meta.setAttribute('content',next==='dark'?'#1c1917':'#fafaf9');
+    if(meta)meta.setAttribute('content',next==='dark'?'#1c1917':'#fff8ee');
     const btn=document.getElementById('themeToggle');
     if(btn){
       const icon=btn.querySelector('.theme-icon');
