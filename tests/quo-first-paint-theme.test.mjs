@@ -13,3 +13,13 @@ test('approved v110 theme is active before first paint',()=>{
   assert.ok(css<headEnd,'v110 stylesheet must load inside <head>');
   assert.ok(css<authScript,'v110 stylesheet must load before the auth script can create the login card');
 });
+
+
+test('final White Saffron semantic theme loads after legacy and mockup CSS',()=>{
+  const finalTheme=index.indexOf('white-saffron-theme.css?v=1');
+  const mockup=index.indexOf('quo-mockup-v110.css?v=114');
+  const headEnd=index.indexOf('</head>');
+  assert.ok(finalTheme>=0,'final White Saffron theme must be linked in index.html');
+  assert.ok(finalTheme>mockup,'final White Saffron theme must load after the mockup stylesheet');
+  assert.ok(finalTheme<headEnd,'final White Saffron theme must load inside <head>');
+});
