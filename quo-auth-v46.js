@@ -105,11 +105,11 @@
     try{prepared=function(){S.preparedBy=actorName();return S.preparedBy}}catch(e){}
     const app=document.getElementById('app');
     app?.setAttribute('aria-busy','true');
-    hideLogin();applyPermissions();installAccountFooter();
+    hideLogin();applyPermissions();installAccountFooter();installAccountMenu();
     S.loading=true;render();
     await loadAll();
     app?.removeAttribute('aria-busy');
-    applyPermissions();installAccountFooter();
+    applyPermissions();installAccountFooter();installAccountMenu();
     return true;
   }
 
@@ -137,6 +137,24 @@
     const foot=document.querySelector('.side-footer');if(!foot||!S.authUser)return;
     foot.innerHTML=`<div class="quo-account"><div><b>${esc(actorName())}</b><span>${isAdmin()?'Administrator':'Staff'}</span></div><button type="button" data-quo-logout>Sign out</button></div>`;
     foot.querySelector('[data-quo-logout]').onclick=logout;
+  }
+
+  function installAccountMenu(){
+    const actions=document.querySelector('.top-actions');if(!actions)return;
+    let account=document.getElementById('quoAccountMenu');
+    if(!S.authUser){account?.remove();return}
+    if(!account){
+      account=document.createElement('div');account.id='quoAccountMenu';account.className='quo-top-account';
+      account.innerHTML='<button type="button" class="btn quo-account-trigger" aria-expanded="false"><span class="quo-account-icon">●</span><span class="quo-account-name"></span><span class="quo-account-caret">⌄</span></button><div class="quo-account-popover hidden"><div class="quo-account-meta"><b></b><span></span></div><button type="button" data-quo-top-logout>Sign out</button></div>';
+      const newBtn=document.getElementById('newDocBtn');actions.insertBefore(account,newBtn||null);
+      const trigger=account.querySelector('.quo-account-trigger'), pop=account.querySelector('.quo-account-popover');
+      trigger.onclick=e=>{e.stopPropagation();const open=pop.classList.toggle('hidden')===false;trigger.setAttribute('aria-expanded',String(open))};
+      account.querySelector('[data-quo-top-logout]').onclick=logout;
+      document.addEventListener('click',e=>{if(!account.contains(e.target)){pop.classList.add('hidden');trigger.setAttribute('aria-expanded','false')}});
+    }
+    account.querySelector('.quo-account-name').textContent=actorName();
+    account.querySelector('.quo-account-meta b').textContent=actorName();
+    account.querySelector('.quo-account-meta span').textContent=isAdmin()?'Administrator':'Staff';
   }
 
   function applyPermissions(){
@@ -227,7 +245,7 @@
   }
 
   function bindAdminUI(){
-    applyPermissions();installAccountFooter();ensureReceiptDeleteButtons();
+    applyPermissions();installAccountFooter();installAccountMenu();ensureReceiptDeleteButtons();
     const create=document.getElementById('quoCreateUser');if(create&&!create.dataset.bound){create.dataset.bound='1';create.onclick=createUser;loadUsers()}
   }
   try{
@@ -253,6 +271,12 @@
   if(!document.getElementById('quoAuthV46Style')){
     const st=document.createElement('style');st.id='quoAuthV46Style';st.textContent=`
       .quo-auth-gate{position:fixed;inset:0;z-index:2147483646;display:grid;place-items:center;padding:20px;background:#eef1f0}.quo-login-card{width:min(410px,100%);padding:30px;background:#fff;border:1px solid #dfe5e2;border-radius:14px;box-shadow:0 20px 70px rgba(24,38,34,.12)}.quo-login-brand{display:flex;align-items:center;gap:12px}.quo-login-mark{width:46px;height:46px;border:1px solid #d9dfdd;border-radius:10px;display:grid;place-items:center;font-family:Georgia,serif;font-weight:800;color:#754920;background:#fffaf3}.quo-login-brand b{display:block;letter-spacing:.16em;font-size:17px}.quo-login-brand span{display:block;margin-top:2px;font-size:9px;color:#7d8582}.quo-login-copy{margin:28px 0 18px}.quo-login-copy h1{margin:0;font-size:25px}.quo-login-copy p{margin:6px 0 0;color:#707976;font-size:11px}.quo-login-card form{display:grid;gap:14px}.quo-login-card label{display:grid;gap:6px;font-size:9px;letter-spacing:.06em;font-weight:800;color:#66706d}.quo-login-card input{height:44px;border:1px solid #d7dfdc;border-radius:8px;padding:0 12px;font-size:13px;outline:0}.quo-login-card input:focus{border-color:#799d94;box-shadow:0 0 0 3px rgba(45,109,100,.08)}.quo-login-card .btn{height:44px;margin-top:2px}.quo-login-error,.quo-user-message{padding:9px 11px;border:1px solid #e3cbc8;border-radius:7px;background:#fff3f2;color:#98443d;font-size:10px}.quo-user-message{margin:0 16px 12px;border-color:#cfe1d7;background:#f1f8f4;color:#35644d}.quo-user-message.bad{border-color:#e3cbc8;background:#fff3f2;color:#98443d}.quo-account{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}.quo-account b{display:block;font-size:10px}.quo-account span{display:block;margin-top:2px;font-size:8px;color:#89918e;text-transform:uppercase;letter-spacing:.06em}.quo-account button{border:0;background:transparent;color:#66706d;font-size:8.5px;font-weight:800}.quo-user-panel{margin-bottom:14px}.quo-user-create{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end;padding:14px 16px;border-bottom:1px solid var(--line2)}.quo-user-create .btn{height:39px}.quo-user-panel .data-table td:last-child{text-align:right}.quo-user-panel .row-actions{white-space:nowrap}@media(max-width:900px){.quo-user-create{grid-template-columns:1fr 1fr}.quo-user-create .btn{width:100%}}@media(max-width:560px){.quo-user-create{grid-template-columns:1fr}}
+    `;document.head.appendChild(st);
+  }
+
+  if(!document.getElementById('quoTopAccountStyle')){
+    const st=document.createElement('style');st.id='quoTopAccountStyle';st.textContent=`
+      .quo-top-account{position:relative}.quo-account-trigger{display:flex;align-items:center;gap:7px;max-width:190px}.quo-account-icon{font-size:9px;color:#8b5a2b}.quo-account-name{max-width:115px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.quo-account-caret{font-size:12px}.quo-account-popover{position:absolute;right:0;top:calc(100% + 8px);z-index:1000;width:190px;padding:8px;background:var(--panel,#fff);border:1px solid var(--line,#e4d8c8);border-radius:9px;box-shadow:0 14px 35px rgba(30,25,20,.14)}.quo-account-meta{padding:8px 9px;border-bottom:1px solid var(--line2,#eee4d8);margin-bottom:5px}.quo-account-meta b,.quo-account-meta span{display:block}.quo-account-meta b{font-size:11px}.quo-account-meta span{margin-top:3px;font-size:9px;color:#777}.quo-account-popover button{width:100%;border:0;background:transparent;text-align:left;padding:9px;border-radius:6px;font:inherit;font-size:11px;cursor:pointer}.quo-account-popover button:hover{background:rgba(128,90,45,.08)}@media(max-width:720px){.quo-account-name{display:none}.quo-account-trigger{padding-inline:10px}}
     `;document.head.appendChild(st);
   }
 
